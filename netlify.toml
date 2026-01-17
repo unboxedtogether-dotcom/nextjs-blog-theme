@@ -1,3 +1,9 @@
 [build]
   command = "npm run build"
   publish = ".next"
+
+[[redirects]]
+  from = "/www.unboxedtogether.com/*"
+  to = "/:splat"
+  status = 301
+  force = true

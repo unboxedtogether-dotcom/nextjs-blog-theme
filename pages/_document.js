@@ -7,13 +7,11 @@ class MyDocument extends Document {
     const cssVars = generateCssVariables();
 
     return (
-      <Html lang="en" className="theme-compiled">
+      <Html lang="en">
         <Head>
           <style>{`:root{${cssVars}}`}</style>
         </Head>
-        <body
-          className={`antialiased text-lg bg-white dark:bg-gray-900 dark:text-white leading-base`}
-        >
+        <body className="antialiased text-lg bg-white text-gray-900 leading-relaxed">
           <Main />
           <NextScript />
         </body>
