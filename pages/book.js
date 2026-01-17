@@ -6,11 +6,9 @@ import { siteConfig } from '../utils/site-config';
 const bookStores = [
   { name: 'Direct from IngramSpark', url: siteConfig.bookLinks.ingramDirect },
   { name: 'Amazon UK', url: siteConfig.bookLinks.amazonUK },
-  { name: 'Amazon US', url: siteConfig.bookLinks.amazonUS },
   { name: 'Waterstones', url: siteConfig.bookLinks.waterstones },
-  { name: 'WHSmith', url: siteConfig.bookLinks.whsmith },
+  { name: 'Amazon Kindle', url: siteConfig.bookLinks.amazonKindle },
   { name: "Blackwell's", url: siteConfig.bookLinks.blackwells },
-  { name: 'Book Depository / Global', url: siteConfig.bookLinks.globalSeller },
 ];
 
 const reviewLinks = [
@@ -36,12 +34,12 @@ export default function Book() {
       />
 
       {/* Hero Section */}
-      <section className="bg-[#1e3a5f] text-white py-16 md:py-24">
+      <section className="bg-[#4b39ef] text-white py-16 md:py-24">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             Unboxed — Buy the Book
           </h1>
-          <p className="text-xl text-gray-200">
+          <p className="text-xl text-gray-100">
             {siteConfig.bookTitle}
           </p>
         </div>
@@ -50,7 +48,7 @@ export default function Book() {
       {/* Where to Buy */}
       <section className="py-16 md:py-24 bg-white">
         <div className="max-w-4xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-[#1e3a5f] text-center mb-8">
+          <h2 className="text-3xl font-bold text-[#4b39ef] text-center mb-8">
             Where to buy
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -75,7 +73,7 @@ export default function Book() {
       {/* Leave a Review */}
       <section className="py-16 md:py-24 bg-gray-50">
         <div className="max-w-4xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-[#1e3a5f] text-center mb-8">
+          <h2 className="text-3xl font-bold text-[#4b39ef] text-center mb-8">
             Leave a review
           </h2>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -97,7 +95,7 @@ export default function Book() {
       {/* Customer Reviews */}
       <section className="py-16 md:py-24 bg-white">
         <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-[#1e3a5f] text-center mb-4">
+          <h2 className="text-3xl font-bold text-[#4b39ef] text-center mb-4">
             What readers are saying
           </h2>
           <p className="text-center text-gray-500 mb-12">
@@ -124,17 +122,17 @@ export default function Book() {
       </section>
 
       {/* CTA */}
-      <section className="py-16 md:py-24 bg-[#1e3a5f]">
+      <section className="py-16 md:py-24 bg-[#4b39ef]">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold text-white mb-6">
             Want to try the app?
           </h2>
-          <p className="text-xl text-gray-200 mb-8">
+          <p className="text-xl text-gray-100 mb-8">
             Join our early testers and be the first to know when the app launches.
           </p>
           <Link
             href="/#signup"
-            className="btn bg-white text-[#1e3a5f] hover:bg-gray-100 font-semibold"
+            className="btn bg-white text-[#4b39ef] hover:bg-gray-100 font-semibold"
           >
             Join early testers for the app
           </Link>
