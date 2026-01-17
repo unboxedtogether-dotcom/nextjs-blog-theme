@@ -7,24 +7,23 @@ export const siteConfig = {
 
   // Contact
   email: 'support@unboxedtogether.com',
+  mediaEmail: 'unboxedtogether@gmail.com',
 
   // Social Links
   social: {
     instagram: 'https://instagram.com/unboxed.together',
     facebook: 'https://facebook.com/unboxed.together',
-    tiktok: '#TIKTOK_LINK#', // Replace with actual TikTok link
+    tiktok: 'https://www.tiktok.com/@unboxed.together?_r=1&_t=ZN-939W8g6wjGo',
   },
 
   // Book Info
   bookTitle: 'Unboxed – The Dirty Secret Hiding In Our Diet',
   bookLinks: {
-    ingramDirect: '#INGRAM_DIRECT_LINK#',
-    amazonUK: '#AMAZON_UK_LINK#',
-    amazonUS: '#AMAZON_US_LINK#',
-    waterstones: '#WATERSTONES_LINK#',
-    whsmith: '#WHSMITH_LINK#',
-    blackwells: '#BLACKWELLS_LINK#',
-    globalSeller: '#GLOBAL_SELLER_LINK#',
+    ingramDirect: 'https://igit.me/Unboxed',
+    amazonUK: 'https://amzn.eu/d/e4oZvno',
+    amazonKindle: 'https://amzn.eu/d/hLbmBWi',
+    waterstones: 'https://www.waterstones.com/book/unboxed/lee-j-jones/9781068174391',
+    blackwells: 'https://blackwells.co.uk/bookshop/product/Unboxed-by-Lee-J-Jones/9781068174391',
     amazonReview: '#AMAZON_REVIEW_LINK#',
     goodreadsReview: '#GOODREADS_REVIEW_LINK#',
   },
@@ -32,36 +31,28 @@ export const siteConfig = {
   // Brainz Magazine Articles - Add your articles here
   brainzArticles: [
     {
-      title: 'Article Title 1',
-      excerpt: 'Short excerpt describing the article content...',
-      link: '#BRAINZ_ARTICLE_1#',
+      title: 'Is Your Food Quietly Stealing Your Energy?',
+      excerpt: 'Discover how hidden additives in everyday foods may be affecting your energy levels, focus, and overall wellbeing.',
+      link: 'https://www.brainzmagazine.com/post/is-your-food-quietly-stealing-your-energy',
     },
     {
-      title: 'Article Title 2',
-      excerpt: 'Short excerpt describing the article content...',
-      link: '#BRAINZ_ARTICLE_2#',
+      title: 'Why Businesses Overlook the Biggest Productivity Hack: Food',
+      excerpt: 'The link between what we eat and workplace performance is often ignored. Here\'s why it matters.',
+      link: 'https://www.brainzmagazine.com/post/why-businesses-overlook-the-biggest-productivity-hack-food',
     },
     {
-      title: 'Article Title 3',
+      title: 'Article Title',
       excerpt: 'Short excerpt describing the article content...',
       link: '#BRAINZ_ARTICLE_3#',
     },
-    {
-      title: 'Article Title 4',
-      excerpt: 'Short excerpt describing the article content...',
-      link: '#BRAINZ_ARTICLE_4#',
-    },
-    {
-      title: 'Article Title 5',
-      excerpt: 'Short excerpt describing the article content...',
-      link: '#BRAINZ_ARTICLE_5#',
-    },
-    {
-      title: 'Article Title 6',
-      excerpt: 'Short excerpt describing the article content...',
-      link: '#BRAINZ_ARTICLE_6#',
-    },
   ],
+
+  // Brainz Executive Contributor Info
+  brainzContributor: {
+    name: 'Lee Jones',
+    title: 'Executive Contributor',
+    award: 'Selected Brainz Top 500 Global Entrepreneurs Awards',
+  },
 
   // Customer Reviews - Add your reviews here
   customerReviews: [
