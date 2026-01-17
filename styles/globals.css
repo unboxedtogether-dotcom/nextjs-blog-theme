@@ -3,17 +3,18 @@
 
 @theme static {
   --color-primary: var(--theme-primary);
-  --color-gradient-1: var(--theme-gradient-1);
-  --color-gradient-2: var(--theme-gradient-2);
-  --color-gradient-3: var(--theme-gradient-3);
-  --color-gradient-4: var(--theme-gradient-4);
+  --color-navy: #1e3a5f;
+  --color-navy-light: #2d4a6f;
+  --color-navy-dark: #152a45;
   --font-primary: var(--theme-headings);
   --font-secondary: var(--theme-body);
 }
 
-@custom-variant dark (&:where(.dark, .dark *));
-
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
   h1,
   h2,
   h3,
@@ -25,5 +26,22 @@
 
   body {
     font-family: var(--font-secondary);
+  }
+
+  /* Custom button styles */
+  .btn {
+    @apply inline-block px-6 py-3 font-semibold rounded-lg transition-all duration-200;
+  }
+
+  .btn-primary {
+    @apply bg-[#1e3a5f] text-white hover:bg-[#2d4a6f];
+  }
+
+  .btn-secondary {
+    @apply bg-white text-[#1e3a5f] border-2 border-[#1e3a5f] hover:bg-[#1e3a5f] hover:text-white;
+  }
+
+  .btn-outline {
+    @apply bg-transparent text-[#1e3a5f] border-2 border-[#1e3a5f] hover:bg-[#1e3a5f] hover:text-white;
   }
 }
