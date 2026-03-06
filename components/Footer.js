@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { siteConfig } from '../utils/site-config';
 
 export default function Footer() {
@@ -68,6 +69,11 @@ export default function Footer() {
         {/* Copyright */}
         <div className="border-t border-white/20 mt-8 pt-8 text-center text-gray-200 text-sm">
           <p>&copy; {siteConfig.companyName}</p>
+          <p className="mt-2">
+            <Link href="/privacy-policy" className="text-gray-200 hover:text-white transition-colors underline">
+              Privacy Policy
+            </Link>
+          </p>
         </div>
       </div>
     </footer>
