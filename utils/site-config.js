@@ -116,6 +116,10 @@ export const siteConfig = {
       title: 'Buy the Book | Unboxed Together',
       description: 'Get Unboxed – The Dirty Secret Hiding In Our Diet. Available on Amazon, Waterstones, and more.',
     },
+    privacyPolicy: {
+      title: 'Privacy Policy | Unboxed Together',
+      description: 'Privacy Policy for the Unboxed Together mobile application. Learn how we handle your data, camera permissions, and third-party services.',
+    },
   },
 
   // Legal
