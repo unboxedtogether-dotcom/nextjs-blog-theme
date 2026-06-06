@@ -3,11 +3,12 @@ import { siteConfig } from '../utils/site-config';
 
 const navLinks = [
   { href: '/', label: 'Home' },
+  { href: '/#challenge', label: 'The Challenge' },
   { href: '/story', label: 'My Story' },
   { href: '/book', label: 'Buy the Book' },
   { href: '/brainz', label: 'Brainz Magazine' },
   { href: '/socials', label: 'Socials' },
-  { href: '#footer', label: 'Contact' },
+  { href: '/#footer', label: 'Contact' },
 ];
 
 export default function Navigation() {
