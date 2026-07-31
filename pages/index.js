@@ -52,10 +52,10 @@ export default function Home() {
               Join early testers
             </a>
             <a
-              href="#footer"
+              href="/additives"
               className="btn border-2 border-white text-white hover:bg-white hover:text-[#4b39ef] font-semibold"
             >
-              Contact
+              Search additives
             </a>
           </div>
         </div>
