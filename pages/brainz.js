@@ -11,7 +11,7 @@ export default function Brainz() {
       />
 
       {/* Hero Section */}
-      <section className="bg-[#4b39ef] text-white py-16 md:py-24">
+      <section className="bg-[#0D47B5] text-white py-16 md:py-24">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             Brainz Magazine
@@ -26,13 +26,13 @@ export default function Brainz() {
       <section className="py-12 bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <div className="inline-block bg-white rounded-lg shadow-lg p-6 md:p-8">
-            <div className="inline-block bg-[#4b39ef] text-white px-4 py-2 rounded-full text-sm font-semibold mb-4">
+            <div className="inline-block bg-[#0D47B5] text-white px-4 py-2 rounded-full text-sm font-semibold mb-4">
               Executive Contributor
             </div>
             <h2 className="text-2xl font-bold text-gray-800 mb-2">
               {siteConfig.brainzContributor.name}
             </h2>
-            <p className="text-[#4b39ef] font-medium">
+            <p className="text-[#0D47B5] font-medium">
               {siteConfig.brainzContributor.award}
             </p>
           </div>
@@ -42,7 +42,7 @@ export default function Brainz() {
       {siteConfig.brainzArticles.length > 0 && (
         <section className="py-16 md:py-24 bg-white">
           <div className="max-w-6xl mx-auto px-4">
-            <h2 className="text-3xl font-bold text-[#4b39ef] text-center mb-12">
+            <h2 className="text-3xl font-bold text-[#0D47B5] text-center mb-12">
               Featured Articles
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -52,7 +52,7 @@ export default function Brainz() {
                   className="bg-gray-50 rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow"
                 >
                   <div className="p-6">
-                    <h3 className="text-xl font-bold text-[#4b39ef] mb-3">
+                    <h3 className="text-xl font-bold text-[#0D47B5] mb-3">
                       {article.title}
                     </h3>
                     <p className="text-gray-600 mb-4">
@@ -77,7 +77,7 @@ export default function Brainz() {
       {/* Press / Media CTA */}
       <section className="py-16 md:py-24 bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold text-[#4b39ef] mb-6">
+          <h2 className="text-3xl font-bold text-[#0D47B5] mb-6">
             Press / Media
           </h2>
           <p className="text-lg text-gray-600 mb-8">
