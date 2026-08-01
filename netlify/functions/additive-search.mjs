@@ -22,7 +22,7 @@ const publicFields = (row) => ({
   unboxedView: row.unboxed_view,
 });
 
-export default async (request) => {
+const additiveSearch = async (request) => {
   if (request.method !== 'GET') {
     return Response.json(
       { error: 'Method not allowed' },
@@ -97,6 +97,8 @@ export default async (request) => {
     );
   }
 };
+
+export default additiveSearch;
 
 export const config = {
   path: '/api/additives',
