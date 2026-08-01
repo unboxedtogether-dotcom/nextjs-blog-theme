@@ -2,6 +2,8 @@ import { useState } from 'react';
 import Layout from '../components/Layout';
 import SEO from '../components/SEO';
 import { siteConfig } from '../utils/site-config';
+import Link from 'next/link';
+import { useAuth } from '../components/auth/AuthProvider';
 
 const exampleSearches = ['E102', 'Tartrazine', 'E211'];
 
@@ -165,6 +167,22 @@ function AdditiveCard({ additive }) {
   );
 }
 
+function AdditivePreview({ additive }) {
+  return (
+    <article className="additive-card additive-preview-card">
+      <header className="additive-card-header">
+        <div><p className="additive-eyebrow">Preview result</p><h2>{additive.eNumber}</h2><p className="additive-name">{additive.additiveName}</p><p className="additive-category"><span>Category</span>{additive.category}</p></div>
+      </header>
+      <section className="additive-access-panel">
+        <p className="additive-eyebrow">Member breakdown</p>
+        <h3>See the full Unboxed breakdown</h3>
+        <p>Create a free account to view the complete additive record and begin building your own clearer picture of food, focus, mood, sleep and digestion.</p>
+        <div><Link className="member-button" href="/signup">Join free</Link><Link className="member-button secondary" href="/login?next=/additives">Log in</Link></div>
+      </section>
+    </article>
+  );
+}
+
 function LoadingCard() {
   return (
     <div className="additive-loading" role="status" aria-label="Searching additive library">
@@ -181,12 +199,14 @@ function LoadingCard() {
 }
 
 export default function Additives() {
+  const { user, loading: authLoading } = useAuth();
   const [query, setQuery] = useState('');
   const [searchedQuery, setSearchedQuery] = useState('');
   const [results, setResults] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [status, setStatus] = useState('idle');
   const [error, setError] = useState('');
+  const [authenticated, setAuthenticated] = useState(false);
 
   const search = async (searchTerm) => {
     const value = searchTerm.trim();
@@ -206,12 +226,14 @@ export default function Additives() {
     setError('');
 
     try {
-      const response = await fetch(`/api/additives?q=${encodeURIComponent(value)}`);
+      const endpoint = user ? '/api/member-additives' : '/api/additives';
+      const response = await fetch(`${endpoint}?q=${encodeURIComponent(value)}`, { cache: 'no-store' });
       const data = await response.json();
 
       if (!response.ok) throw new Error(data.error || 'Search failed');
 
       setResults(data.results);
+      setAuthenticated(Boolean(data.authenticated));
       setSelectedIndex(0);
       setStatus(data.results.length ? 'success' : 'empty');
     } catch (searchError) {
@@ -256,8 +278,8 @@ export default function Additives() {
                 placeholder="Try E102, 102 or Tartrazine"
                 autoComplete="off"
               />
-              <button type="submit" disabled={status === 'loading'}>
-                {status === 'loading' ? 'Searching' : 'Search'}
+              <button type="submit" disabled={status === 'loading' || authLoading}>
+                {status === 'loading' || authLoading ? 'Searching' : 'Search'}
               </button>
             </div>
             <div className="additive-examples">
@@ -316,7 +338,7 @@ export default function Additives() {
                   </div>
                 </div>
               )}
-              <AdditiveCard additive={results[selectedIndex]} />
+              {authenticated ? <AdditiveCard additive={results[selectedIndex]} /> : <AdditivePreview additive={results[selectedIndex]} />}
             </>
           )}
         </main>

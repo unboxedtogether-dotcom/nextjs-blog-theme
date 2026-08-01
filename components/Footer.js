@@ -1,4 +1,5 @@
 import { siteConfig } from '../utils/site-config';
+import Link from 'next/link';
 import BrandLogo from './BrandLogo';
 
 export default function Footer() {
@@ -69,6 +70,7 @@ export default function Footer() {
         {/* Copyright */}
         <div className="footer-bottom">
           <p>&copy; {siteConfig.companyName}</p>
+          <div className="footer-legal"><Link href="/privacy">Privacy Policy</Link><Link href="/terms">Terms</Link></div>
         </div>
       </div>
     </footer>

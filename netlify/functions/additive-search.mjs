@@ -1,25 +1,9 @@
-import { getDatabase } from '@netlify/database';
-
-const db = getDatabase();
+import { parseAdditiveQuery, searchAdditives } from './_shared/additive-query.mjs';
 
 const publicFields = (row) => ({
   eNumber: row.e_number,
   additiveName: row.additive_name,
   category: row.category,
-  foodFunction: row.food_function,
-  riskIndicator: row.risk_indicator,
-  foundIn: row.found_in,
-  peakExposure: row.peak_exposure,
-  processing: row.processing,
-  typicalClearance: row.typical_clearance,
-  adi: row.adi,
-  evidenceSuggests: row.evidence_suggests,
-  stackingFactors: row.stacking_factors,
-  whoShouldBeAware: row.who_should_be_aware,
-  naturalAlternatives: row.natural_alternatives,
-  ukRegulatoryStatus: row.uk_regulatory_status,
-  sources: row.sources,
-  unboxedView: row.unboxed_view,
 });
 
 const additiveSearch = async (request) => {
@@ -30,63 +14,17 @@ const additiveSearch = async (request) => {
     );
   }
 
-  const url = new URL(request.url);
-  const query = (url.searchParams.get('q') || '').trim().slice(0, 80);
+  const query = parseAdditiveQuery(request);
 
   if (!query) {
-    return Response.json({ results: [] });
+    return Response.json({ results: [], authenticated: false });
   }
-
-  const normalizedQuery = query.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const numericQuery = query.replace(/\D/g, '');
-
-  if (!normalizedQuery) {
-    return Response.json({ results: [] });
-  }
-
-  const namePattern = `%${query.toLowerCase()}%`;
-  const numberPattern = `%${normalizedQuery}%`;
 
   try {
-    const rows = await db.sql`
-      SELECT
-        e_number,
-        additive_name,
-        category,
-        food_function,
-        risk_indicator,
-        found_in,
-        peak_exposure,
-        processing,
-        typical_clearance,
-        adi,
-        evidence_suggests,
-        stacking_factors,
-        who_should_be_aware,
-        natural_alternatives,
-        uk_regulatory_status,
-        sources,
-        unboxed_view
-      FROM additives
-      WHERE publish_ready = TRUE
-        AND (
-          LOWER(additive_name) LIKE ${namePattern}
-          OR REGEXP_REPLACE(LOWER(e_number), '[^a-z0-9]', '', 'g') LIKE ${numberPattern}
-          OR (${numericQuery} <> '' AND REGEXP_REPLACE(e_number, '[^0-9]', '', 'g') = ${numericQuery})
-        )
-      ORDER BY
-        CASE
-          WHEN REGEXP_REPLACE(LOWER(e_number), '[^a-z0-9]', '', 'g') = ${normalizedQuery} THEN 0
-          WHEN LOWER(additive_name) = ${query.toLowerCase()} THEN 1
-          WHEN LOWER(additive_name) LIKE ${`${query.toLowerCase()}%`} THEN 2
-          ELSE 3
-        END,
-        e_number
-      LIMIT 8
-    `;
+    const rows = await searchAdditives(query, 1);
 
     return Response.json(
-      { results: rows.map(publicFields) },
+      { results: rows.map(publicFields), authenticated: false },
       { headers: { 'Cache-Control': 'public, max-age=300' } },
     );
   } catch (error) {
