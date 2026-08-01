@@ -12,8 +12,8 @@ const bookStores = [
 ];
 
 const reviewLinks = [
-  { name: 'Leave an Amazon review', url: siteConfig.bookLinks.amazonReview },
-  { name: 'Leave a Goodreads review', url: siteConfig.bookLinks.goodreadsReview },
+  { name: 'Read an Amazon review', url: siteConfig.bookLinks.amazonReview },
+  { name: 'Read Waterstones reviews', url: siteConfig.bookLinks.waterstonesReviews },
   { name: 'Send feedback', url: `mailto:${siteConfig.email}` },
 ];
 
@@ -70,11 +70,11 @@ export default function Book() {
         </div>
       </section>
 
-      {/* Leave a Review */}
+      {/* Reviews and Feedback */}
       <section className="py-16 md:py-24 bg-gray-50">
         <div className="max-w-4xl mx-auto px-4">
           <h2 className="text-3xl font-bold text-[#4b39ef] text-center mb-8">
-            Leave a review
+            Reviews and feedback
           </h2>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             {reviewLinks.map((link) => (
