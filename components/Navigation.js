@@ -2,6 +2,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { siteConfig } from '../utils/site-config';
+import { logout } from '@netlify/identity';
+import { useAuth } from './auth/AuthProvider';
 import BrandLogo from './BrandLogo';
 
 const navLinks = [
@@ -17,6 +19,12 @@ const navLinks = [
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
+  const { user, loading } = useAuth();
+  const signOut = async () => {
+    setIsOpen(false);
+    await logout();
+    window.location.href = '/';
+  };
 
   return (
     <header className="site-header">
@@ -45,6 +53,20 @@ export default function Navigation() {
               >
                 {link.label}
               </Link>
+            ))}
+          </div>
+          <div className="nav-account" aria-label="Member account">
+            {!loading && (user ? (
+              <>
+                <Link href="/members" onClick={() => setIsOpen(false)}>My dashboard</Link>
+                <Link href="/members/profile" onClick={() => setIsOpen(false)}>Account</Link>
+                <button type="button" onClick={signOut}>Log out</button>
+              </>
+            ) : (
+              <>
+                <Link href="/login" onClick={() => setIsOpen(false)}>Log in</Link>
+                <Link className="nav-join" href="/signup" onClick={() => setIsOpen(false)}>Join free</Link>
+              </>
             ))}
           </div>
           <div className="nav-socials">
