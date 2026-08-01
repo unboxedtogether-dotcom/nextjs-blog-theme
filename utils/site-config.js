@@ -28,7 +28,7 @@ export const siteConfig = {
     waterstonesReviews: 'https://www.waterstones.com/book/unboxed/lee-j-jones/9781068174391#reviews',
   },
 
-  // Brainz Magazine Articles - Add your articles here
+  // Published Brainz Magazine articles
   brainzArticles: [
     {
       title: 'Is Your Food Quietly Stealing Your Energy?',
@@ -40,11 +40,6 @@ export const siteConfig = {
       excerpt: 'The link between what we eat and workplace performance is often ignored. Here\'s why it matters.',
       link: 'https://www.brainzmagazine.com/post/why-businesses-overlook-the-biggest-productivity-hack-food',
     },
-    {
-      title: 'Article Title',
-      excerpt: 'Short excerpt describing the article content...',
-      link: '#BRAINZ_ARTICLE_3#',
-    },
   ],
 
   // Brainz Executive Contributor Info
@@ -54,45 +49,8 @@ export const siteConfig = {
     award: 'Selected Brainz Top 500 Global Entrepreneurs Awards',
   },
 
-  // Customer Reviews - Add your reviews here
-  customerReviews: [
-    {
-      stars: 5,
-      text: 'Placeholder review text. This book changed how I think about food...',
-      name: 'Reviewer Name',
-      country: 'United Kingdom',
-    },
-    {
-      stars: 5,
-      text: 'Placeholder review text. Eye-opening and practical...',
-      name: 'Reviewer Name',
-      country: 'United States',
-    },
-    {
-      stars: 5,
-      text: 'Placeholder review text. A must-read for anyone who cares about what they eat...',
-      name: 'Reviewer Name',
-      country: 'Australia',
-    },
-    {
-      stars: 5,
-      text: 'Placeholder review text. Finally, someone explaining additives in plain English...',
-      name: 'Reviewer Name',
-      country: 'Canada',
-    },
-    {
-      stars: 5,
-      text: 'Placeholder review text. Informative and well-researched...',
-      name: 'Reviewer Name',
-      country: 'Ireland',
-    },
-    {
-      stars: 5,
-      text: 'Placeholder review text. Changed our family\'s shopping habits...',
-      name: 'Reviewer Name',
-      country: 'New Zealand',
-    },
-  ],
+  // Verified customer reviews only
+  customerReviews: [],
 
   // SEO
   seo: {
