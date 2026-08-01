@@ -92,34 +92,32 @@ export default function Book() {
         </div>
       </section>
 
-      {/* Customer Reviews */}
-      <section className="py-16 md:py-24 bg-white">
-        <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-[#4b39ef] text-center mb-4">
-            What readers are saying
-          </h2>
-          <p className="text-center text-gray-500 mb-12">
-            Real reviews will appear here as they come in.
-          </p>
+      {siteConfig.customerReviews.length > 0 && (
+        <section className="py-16 md:py-24 bg-white">
+          <div className="max-w-6xl mx-auto px-4">
+            <h2 className="text-3xl font-bold text-[#4b39ef] text-center mb-12">
+              What readers are saying
+            </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {siteConfig.customerReviews.map((review, index) => (
-              <div
-                key={index}
-                className="bg-gray-50 rounded-lg p-6 shadow-md"
-              >
-                <StarRating count={review.stars} />
-                <p className="text-gray-600 mt-4 mb-4 italic">
-                  "{review.text}"
-                </p>
-                <p className="text-sm text-gray-500">
-                  — {review.name}, {review.country}
-                </p>
-              </div>
-            ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {siteConfig.customerReviews.map((review) => (
+                <div
+                  key={`${review.name}-${review.text}`}
+                  className="bg-gray-50 rounded-lg p-6 shadow-md"
+                >
+                  <StarRating count={review.stars} />
+                  <p className="text-gray-600 mt-4 mb-4 italic">
+                    "{review.text}"
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    — {review.name}, {review.country}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* CTA */}
       <section className="py-16 md:py-24 bg-[#4b39ef]">

@@ -39,39 +39,40 @@ export default function Brainz() {
         </div>
       </section>
 
-      {/* Articles Grid */}
-      <section className="py-16 md:py-24 bg-white">
-        <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-[#4b39ef] text-center mb-12">
-            Featured Articles
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {siteConfig.brainzArticles.map((article, index) => (
-              <article
-                key={index}
-                className="bg-gray-50 rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow"
-              >
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-[#4b39ef] mb-3">
-                    {article.title}
-                  </h3>
-                  <p className="text-gray-600 mb-4">
-                    {article.excerpt}
-                  </p>
-                  <a
-                    href={article.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block btn btn-primary text-sm"
-                  >
-                    Read article
-                  </a>
-                </div>
-              </article>
-            ))}
+      {siteConfig.brainzArticles.length > 0 && (
+        <section className="py-16 md:py-24 bg-white">
+          <div className="max-w-6xl mx-auto px-4">
+            <h2 className="text-3xl font-bold text-[#4b39ef] text-center mb-12">
+              Featured Articles
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {siteConfig.brainzArticles.map((article) => (
+                <article
+                  key={article.link}
+                  className="bg-gray-50 rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow"
+                >
+                  <div className="p-6">
+                    <h3 className="text-xl font-bold text-[#4b39ef] mb-3">
+                      {article.title}
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      {article.excerpt}
+                    </p>
+                    <a
+                      href={article.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block btn btn-primary text-sm"
+                    >
+                      Read article
+                    </a>
+                  </div>
+                </article>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Press / Media CTA */}
       <section className="py-16 md:py-24 bg-gray-50">
