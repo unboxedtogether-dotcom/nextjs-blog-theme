@@ -24,8 +24,8 @@ export const siteConfig = {
     amazonKindle: 'https://amzn.eu/d/hLbmBWi',
     waterstones: 'https://www.waterstones.com/book/unboxed/lee-j-jones/9781068174391',
     blackwells: 'https://blackwells.co.uk/bookshop/product/Unboxed-by-Lee-J-Jones/9781068174391',
-    amazonReview: '#AMAZON_REVIEW_LINK#',
-    goodreadsReview: '#GOODREADS_REVIEW_LINK#',
+    amazonReview: 'https://www.amazon.co.uk/gp/customer-reviews/R1PTO2E32H47DI?ref_=cm_sw_r_mwn_dprv_ZF0J7NZMJ3V0DBCD186F&language=en-US',
+    waterstonesReviews: 'https://www.waterstones.com/book/unboxed/lee-j-jones/9781068174391#reviews',
   },
 
   // Brainz Magazine Articles - Add your articles here
