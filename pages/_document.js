@@ -9,6 +9,7 @@ class MyDocument extends Document {
     return (
       <Html lang="en">
         <Head>
+          <link rel="icon" href="/favicon.png" type="image/png" />
           <style>{`:root{${cssVars}}`}</style>
         </Head>
         <body className="antialiased text-lg bg-white text-gray-900 leading-relaxed">

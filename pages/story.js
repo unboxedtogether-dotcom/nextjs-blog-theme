@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Layout from '../components/Layout';
 import SEO from '../components/SEO';
+import PhotoPlaceholder from '../components/PhotoPlaceholder';
 import { siteConfig } from '../utils/site-config';
 
 export default function Story() {
@@ -12,7 +13,7 @@ export default function Story() {
       />
 
       {/* Hero Section */}
-      <section className="bg-[#4b39ef] text-white py-16 md:py-24">
+      <section className="bg-[#0D47B5] text-white py-16 md:py-24">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">My Story</h1>
           <p className="text-xl text-gray-100">
@@ -24,9 +25,14 @@ export default function Story() {
       {/* Story Content */}
       <section className="py-16 md:py-24 bg-white">
         <div className="max-w-3xl mx-auto px-4">
+          <PhotoPlaceholder
+            type="founder"
+            alt="Founder portrait placeholder for the Unboxed Together story"
+            className="story-founder-photo"
+          />
           {/* My Journey */}
           <div className="mb-16">
-            <h2 className="text-2xl md:text-3xl font-bold text-[#4b39ef] mb-6">
+            <h2 className="text-2xl md:text-3xl font-bold text-[#0D47B5] mb-6">
               My journey
             </h2>
             <div className="prose prose-lg text-gray-600 space-y-4">
@@ -44,7 +50,7 @@ export default function Story() {
 
           {/* The Turning Point */}
           <div className="mb-16">
-            <h2 className="text-2xl md:text-3xl font-bold text-[#4b39ef] mb-6">
+            <h2 className="text-2xl md:text-3xl font-bold text-[#0D47B5] mb-6">
               The turning point
             </h2>
             <div className="prose prose-lg text-gray-600 space-y-4">
@@ -57,7 +63,7 @@ export default function Story() {
               <p>
                 When I finally got clarity around ADHD and started making changes, I expected medication or "mindset" to be the main fix. But the biggest surprise was this:
               </p>
-              <p className="font-semibold text-[#4b39ef]">
+              <p className="font-semibold text-[#0D47B5]">
                 When I cleaned up what I was consuming, my brain started behaving differently.
               </p>
               <p>
@@ -71,7 +77,7 @@ export default function Story() {
 
           {/* Why I Wrote the Book */}
           <div className="mb-16">
-            <h2 className="text-2xl md:text-3xl font-bold text-[#4b39ef] mb-6">
+            <h2 className="text-2xl md:text-3xl font-bold text-[#0D47B5] mb-6">
               Why I wrote Unboxed – The Dirty Secret Hiding In Our Diet
             </h2>
             <div className="prose prose-lg text-gray-600 space-y-4">
@@ -84,7 +90,7 @@ export default function Story() {
               <p>
                 It's about something simple:
               </p>
-              <p className="font-semibold text-[#4b39ef] text-xl">
+              <p className="font-semibold text-[#0D47B5] text-xl">
                 Giving people their power back.
               </p>
               <p>
@@ -100,7 +106,7 @@ export default function Story() {
               <p>
                 And most of all, I wrote it to say:
               </p>
-              <p className="font-semibold text-[#4b39ef]">
+              <p className="font-semibold text-[#0D47B5]">
                 You're not imagining it. You're not alone. And you're not the problem.
               </p>
             </div>
@@ -108,7 +114,7 @@ export default function Story() {
 
           {/* Why Unboxed Together */}
           <div className="mb-16">
-            <h2 className="text-2xl md:text-3xl font-bold text-[#4b39ef] mb-6">
+            <h2 className="text-2xl md:text-3xl font-bold text-[#0D47B5] mb-6">
               Why Unboxed Together
             </h2>
             <div className="prose prose-lg text-gray-600 space-y-4">
@@ -152,7 +158,7 @@ export default function Story() {
               <p>
                 And if you choose to follow, share, support, or join early access — you're not just backing a product.
               </p>
-              <p className="font-semibold text-[#4b39ef]">
+              <p className="font-semibold text-[#0D47B5]">
                 You're helping build a safer, clearer world for people like us.
               </p>
             </div>

@@ -34,7 +34,7 @@ export default function Book() {
       />
 
       {/* Hero Section */}
-      <section className="bg-[#4b39ef] text-white py-16 md:py-24">
+      <section className="bg-[#0D47B5] text-white py-16 md:py-24">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             Unboxed — Buy the Book
@@ -48,7 +48,7 @@ export default function Book() {
       {/* Where to Buy */}
       <section className="py-16 md:py-24 bg-white">
         <div className="max-w-4xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-[#4b39ef] text-center mb-8">
+          <h2 className="text-3xl font-bold text-[#0D47B5] text-center mb-8">
             Where to buy
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -73,7 +73,7 @@ export default function Book() {
       {/* Reviews and Feedback */}
       <section className="py-16 md:py-24 bg-gray-50">
         <div className="max-w-4xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-[#4b39ef] text-center mb-8">
+          <h2 className="text-3xl font-bold text-[#0D47B5] text-center mb-8">
             Reviews and feedback
           </h2>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -95,7 +95,7 @@ export default function Book() {
       {siteConfig.customerReviews.length > 0 && (
         <section className="py-16 md:py-24 bg-white">
           <div className="max-w-6xl mx-auto px-4">
-            <h2 className="text-3xl font-bold text-[#4b39ef] text-center mb-12">
+            <h2 className="text-3xl font-bold text-[#0D47B5] text-center mb-12">
               What readers are saying
             </h2>
 
@@ -120,7 +120,7 @@ export default function Book() {
       )}
 
       {/* CTA */}
-      <section className="py-16 md:py-24 bg-[#4b39ef]">
+      <section className="py-16 md:py-24 bg-[#0D47B5]">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold text-white mb-6">
             Want to try the app?
@@ -130,7 +130,7 @@ export default function Book() {
           </p>
           <Link
             href="/#signup"
-            className="btn bg-white text-[#4b39ef] hover:bg-gray-100 font-semibold"
+            className="btn bg-white text-[#0D47B5] hover:bg-gray-100 font-semibold"
           >
             Join early testers for the app
           </Link>
