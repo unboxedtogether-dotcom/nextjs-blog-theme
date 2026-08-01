@@ -12,6 +12,11 @@ export default async function memberData(request) {
   if (!user) return Response.json({ error: 'Please log in to continue.' }, { status: 401 });
 
   if (request.method === 'GET') {
+    await db.sql`
+      INSERT INTO profiles (id, display_name)
+      VALUES (${user.id}, ${user.userMetadata?.full_name || user.email?.split('@')[0] || 'Member'})
+      ON CONFLICT (id) DO NOTHING
+    `;
     const profiles = await db.sql`SELECT display_name, onboarding_completed, marketing_consent FROM profiles WHERE id = ${user.id} LIMIT 1`;
     const baselines = await db.sql`
       SELECT improvement_goals, general_wellbeing_score, energy_score, focus_score, sleep_score,

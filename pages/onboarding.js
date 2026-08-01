@@ -1,16 +1,36 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import SEO from '../components/SEO';
 import BrandLogo from '../components/BrandLogo';
-import { getBaseline, getMember } from '../utils/member-server';
 import { baselineFromDatabase, onboardingQuestions } from '../utils/onboarding-options';
+import { useMemberData } from '../utils/use-member-data';
 
 function Choice({ selected, children, onClick }) {
   return <button type="button" className={`onboarding-choice${selected ? ' is-selected' : ''}`} aria-pressed={selected} onClick={onClick}>{children}</button>;
 }
 
-export default function Onboarding({ initialBaseline, editing }) {
+export default function Onboarding() {
+  const router = useRouter();
+  const { data, loading, error } = useMemberData();
+  const editing = router.query.edit === '1';
+
+  useEffect(() => {
+    if (!loading && data?.profile?.onboarding_completed && !editing) router.replace('/members');
+  }, [data, editing, loading, router]);
+
+  if (error) {
+    return <main className="onboarding-page" id="main-content"><SEO title="Your starting point | Unboxed Together" description="Set a personal starting point for your Unboxed Together membership." path="/onboarding" /><p className="onboarding-error" role="alert">{error}</p></main>;
+  }
+
+  if (loading || !data?.profile || (data.profile.onboarding_completed && !editing)) {
+    return <main className="onboarding-page" id="main-content"><SEO title="Your starting point | Unboxed Together" description="Set a personal starting point for your Unboxed Together membership." path="/onboarding" /><p className="auth-loading">Loading your starting point…</p></main>;
+  }
+
+  return <OnboardingForm initialBaseline={baselineFromDatabase(data.baseline)} editing={editing} />;
+}
+
+function OnboardingForm({ initialBaseline, editing }) {
   const router = useRouter();
   const [answers, setAnswers] = useState(initialBaseline);
   const [step, setStep] = useState(0);
@@ -74,13 +94,4 @@ export default function Onboarding({ initialBaseline, editing }) {
       <p className="onboarding-privacy">Your answers stay connected to your account and are not sent to analytics. Read our <Link href="/privacy">Privacy Policy</Link>.</p>
     </main>
   );
-}
-
-export async function getServerSideProps(context) {
-  const member = await getMember();
-  if (!member) return { redirect: { destination: `/login?next=${encodeURIComponent(context.resolvedUrl)}`, permanent: false } };
-  const editing = context.query.edit === '1';
-  if (member.profile.onboarding_completed && !editing) return { redirect: { destination: '/members', permanent: false } };
-  const baseline = await getBaseline(member.user.id);
-  return { props: { initialBaseline: baselineFromDatabase(baseline), editing } };
 }
