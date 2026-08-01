@@ -19,7 +19,7 @@
     "build": "next build",
     "start": "next start",
     "export": "next build && next export",
-    "lint": "next lint"
+    "lint": "eslint ."
   },
   "dependencies": {
     "@mapbox/rehype-prism": "^0.9.0",
