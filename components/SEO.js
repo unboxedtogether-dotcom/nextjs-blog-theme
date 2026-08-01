@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import { siteConfig } from '../utils/site-config';
 
-export default function SEO({ title, description }) {
+export default function SEO({ title, description, path = '' }) {
   return (
     <Head>
       <title>{title}</title>
@@ -13,7 +13,7 @@ export default function SEO({ title, description }) {
       <meta name="twitter:card" content="summary" />
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
-      <link rel="canonical" href={`https://${siteConfig.domain}`} />
+      <link rel="canonical" href={`https://${siteConfig.domain}${path}`} />
     </Head>
   );
 }

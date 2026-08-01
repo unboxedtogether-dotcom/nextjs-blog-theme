@@ -100,6 +100,10 @@ export const siteConfig = {
       title: 'Unboxed Together | Understand Food Additives',
       description: 'A simple barcode-scanning app to help people understand food additives and make clearer choices. Join our early testers.',
     },
+    additives: {
+      title: 'Search Food Additives | Unboxed Together',
+      description: 'Search by E number or additive name and see clear, practical information from the Unboxed Additive Library.',
+    },
     story: {
       title: 'My Story | Unboxed Together',
       description: 'The journey behind Unboxed Together and why understanding food additives matters.',

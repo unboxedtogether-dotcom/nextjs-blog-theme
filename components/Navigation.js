@@ -3,6 +3,7 @@ import { siteConfig } from '../utils/site-config';
 
 const navLinks = [
   { href: '/', label: 'Home' },
+  { href: '/additives', label: 'Additive Search' },
   { href: '/story', label: 'My Story' },
   { href: '/book', label: 'Buy the Book' },
   { href: '/brainz', label: 'Brainz Magazine' },

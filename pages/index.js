@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Link from 'next/link';
 import Layout from '../components/Layout';
 import SEO from '../components/SEO';
 import { siteConfig } from '../utils/site-config';
@@ -51,12 +52,12 @@ export default function Home() {
             >
               Join early testers
             </a>
-            <a
-              href="#footer"
+            <Link
+              href="/additives"
               className="btn border-2 border-white text-white hover:bg-white hover:text-[#4b39ef] font-semibold"
             >
-              Contact
-            </a>
+              Search additives
+            </Link>
           </div>
         </div>
       </section>
