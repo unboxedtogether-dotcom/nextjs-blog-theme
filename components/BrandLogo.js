@@ -14,12 +14,11 @@ export function BrandImage({ variant = 'horizontal', className = '', alt = siteC
   return <Image src={asset.src} alt={alt} width={asset.width} height={asset.height} className={className} priority={priority} sizes={sizes} />;
 }
 
-// Horizontal logo by default; on small screens `responsive` swaps to the UB symbol.
-export default function BrandLogo({ responsive = false, className = '' }) {
+// Horizontal logo (UNBOXED left, TOGETHER right) at every screen size.
+export default function BrandLogo({ className = '' }) {
   return (
-    <Link href="/" className={`brand-logo${responsive ? ' brand-logo--responsive' : ''} ${className}`} aria-label={`${siteConfig.siteName} home`}>
-      <BrandImage variant="horizontal" alt="" className="brand-logo__image brand-logo__full" priority sizes="160px" />
-      {responsive && <BrandImage variant="symbol" alt="" className="brand-logo__image brand-logo__symbol" priority sizes="48px" />}
+    <Link href="/" className={`brand-logo ${className}`} aria-label={`${siteConfig.siteName} home`}>
+      <BrandImage variant="horizontal" alt="" className="brand-logo__image" priority sizes="160px" />
     </Link>
   );
 }

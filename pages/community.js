@@ -24,7 +24,7 @@ export default function Community() {
                 : <><Link href="/signup" className="ut-btn ut-btn--primary">Join for free</Link><Link href="/login" className="ut-btn ut-btn--secondary">Log in</Link></>}
             </div>
           </div>
-          <BrandImage variant="vertical" className="simple-hero__logo" alt="Unboxed Together logo" sizes="260px" priority />
+          <BrandImage variant="horizontal" className="simple-hero__logo" alt="Unboxed Together logo" sizes="260px" priority />
         </div>
       </section>
       <section className="ut-section ut-section--tint">

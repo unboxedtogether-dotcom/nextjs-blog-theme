@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { siteConfig } from '../utils/site-config';
 import BrandLogo from './BrandLogo';
+import { useAuth } from './auth/AuthProvider';
 import SocialLinks from './SocialLinks';
 
 const quickLinks = [
@@ -14,13 +15,19 @@ const quickLinks = [
   ['/socials', 'Socials'],
 ];
 
-const memberLinks = [
+const guestLinks = [
   ['/signup', 'Join for free'],
   ['/login', 'Log in'],
+];
+
+const memberLinks = [
   ['/members', 'Member dashboard'],
+  ['/members/profile', 'Account settings'],
 ];
 
 export default function Footer() {
+  const { user, loading } = useAuth();
+  const accountLinks = !loading && user ? memberLinks : guestLinks;
   return (
     <footer id="footer" className="site-footer">
       <div className="site-container">
@@ -41,7 +48,7 @@ export default function Footer() {
 
           <nav className="footer-column" aria-label="Member links">
             <h2>Members</h2>
-            <ul>{memberLinks.map(([href, label]) => <li key={href}><Link href={href}>{label}</Link></li>)}</ul>
+            <ul>{accountLinks.map(([href, label]) => <li key={href}><Link href={href}>{label}</Link></li>)}</ul>
           </nav>
 
           <div className="footer-column">

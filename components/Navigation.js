@@ -63,7 +63,14 @@ export default function Navigation() {
   return (
     <header className="site-header">
       <nav className="site-nav" aria-label="Primary navigation">
-        <BrandLogo responsive />
+        <BrandLogo />
+
+        {!loading && user && (
+          <Link href="/members" className="nav-member-chip" aria-label={`My dashboard (${memberName})`}>
+            <MemberAvatar name={memberName} version={member?.avatarVersion} size="sm" />
+            <span className="nav-member__name">{memberName.split(' ')[0]}</span>
+          </Link>
+        )}
 
         <button
           type="button"
