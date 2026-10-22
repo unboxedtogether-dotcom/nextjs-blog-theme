@@ -4,6 +4,8 @@ import Layout from '../../components/Layout';
 import SEO from '../../components/SEO';
 import { useMemberData } from '../../utils/use-member-data';
 import { questionnaireSections } from '../../utils/welcome-questionnaire.mjs';
+import BrandLoader from '../../components/BrandLoader';
+import AdminReviews from '../../components/members/AdminReviews';
 
 const formatDate = (value) => (value ? new Date(value).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) : '—');
 
@@ -45,7 +47,7 @@ function MemberDetail({ id, onClose }) {
       .catch((error) => setState({ loading: false, error: error.message, member: null }));
   }, [id]);
 
-  if (state.loading) return <p className="auth-loading">Loading answers…</p>;
+  if (state.loading) return <BrandLoader label="Loading answers…" />;
   if (state.error) return <p className="onboarding-error" role="alert">{state.error}</p>;
   const { profile, welcome, health, consentHistory } = state.member;
 
@@ -92,7 +94,7 @@ function MemberMessages() {
     if (response.ok) setState((current) => ({ ...current, messages: current.messages.map((item) => (item.id === id ? { ...item, status: 'read' } : item)) }));
   };
 
-  if (state.loading) return <p className="auth-loading">Loading messages…</p>;
+  if (state.loading) return <BrandLoader label="Loading messages…" />;
   if (state.error) return <p className="onboarding-error" role="alert">{state.error}</p>;
   return (
     <section className="profile-panel">
@@ -121,14 +123,16 @@ export default function AdminQuestionnaires() {
       <SEO title="Team area | Unboxed Together" description="Restricted member questionnaire access." path="/members/admin" />
       <Head><meta name="robots" content="noindex, nofollow" /></Head>
       <div className="member-page profile-page">
-        <header className="member-hero compact"><p className="member-kicker">Team only</p><h1>Team area</h1><p>Read-only and confidential. Every view is recorded. Do not copy answers into email.</p></header>
+        <header className="member-hero compact"><p className="member-kicker">Team only</p><h1>Team area</h1><p>Confidential. Questionnaires and messages are read-only and every view is recorded. Do not copy answers into email.</p></header>
         <nav className="dashboard-nav" aria-label="Team area sections">
           <button type="button" className={tab === 'questionnaires' ? 'is-active' : ''} onClick={() => setTab('questionnaires')}>Questionnaires</button>
           <button type="button" className={tab === 'messages' ? 'is-active' : ''} onClick={() => setTab('messages')}>Messages</button>
+          <button type="button" className={tab === 'reviews' ? 'is-active' : ''} onClick={() => setTab('reviews')}>Book reviews</button>
         </nav>
         {tab === 'messages' && !error && <MemberMessages />}
+        {tab === 'reviews' && !error && <AdminReviews />}
         {error && <p className="onboarding-error" role="alert">{error}</p>}
-        {tab === 'questionnaires' && loading && !error && <p className="auth-loading">Loading questionnaires…</p>}
+        {tab === 'questionnaires' && loading && !error && <BrandLoader label="Loading questionnaires…" />}
         {tab === 'questionnaires' && data && (selected ? <MemberDetail id={selected} onClose={() => setSelected('')} /> : (
           <section className="profile-panel">
             <h2>{data.members.length} {data.members.length === 1 ? 'member' : 'members'}</h2>

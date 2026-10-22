@@ -4,6 +4,7 @@ import Layout from '../../components/Layout';
 import SEO from '../../components/SEO';
 import Dashboard from '../../components/members/Dashboard';
 import { useMemberData } from '../../utils/use-member-data';
+import BrandLoader from '../../components/BrandLoader';
 
 const seo = <SEO title="My dashboard | Unboxed Together" description="Your private Unboxed Together member dashboard." path="/members" />;
 
@@ -17,7 +18,7 @@ export default function Members() {
   }, [data, loading, router, welcomeDone]);
 
   if (error || loading || !data?.profile || !welcomeDone) {
-    return <Layout>{seo}<div className="member-page">{error ? <p className="onboarding-error" role="alert">{error}</p> : <p className="auth-loading">Loading your member space…</p>}</div></Layout>;
+    return <Layout>{seo}<div className="member-page">{error ? <p className="onboarding-error" role="alert">{error}</p> : <BrandLoader label="Loading your member space…" />}</div></Layout>;
   }
 
   return <Dashboard initial={data} email={user?.email || ''} seo={seo} />;

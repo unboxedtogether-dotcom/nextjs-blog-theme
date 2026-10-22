@@ -10,6 +10,7 @@ import SubscriptionCard from '../../components/members/SubscriptionCard';
 import { sectionStatus } from '../../components/members/WelcomeFormCard';
 import { useMemberData } from '../../utils/use-member-data';
 import { privacyContactEmail, privacyNoticePath, questionnaireSections } from '../../utils/welcome-questionnaire.mjs';
+import BrandLoader from '../../components/BrandLoader';
 
 const seo = <SEO title="Account settings | Unboxed Together" description="Manage your Unboxed Together profile, preferences and privacy." path="/members/profile" />;
 const longDate = (value) => new Date(value).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -25,7 +26,7 @@ export default function AccountSettings() {
   }, [data, loading, router, welcomeDone]);
 
   if (error || loading || !data?.profile || !welcomeDone) {
-    return <Layout>{seo}<div className="member-page">{error ? <p className="onboarding-error" role="alert">{error}</p> : <p className="auth-loading">Loading your account…</p>}</div></Layout>;
+    return <Layout>{seo}<div className="member-page">{error ? <p className="onboarding-error" role="alert">{error}</p> : <BrandLoader label="Loading your account…" />}</div></Layout>;
   }
 
   return <SettingsContent initial={data} email={user?.email || ''} />;

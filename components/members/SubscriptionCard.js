@@ -8,7 +8,7 @@ export default function SubscriptionCard({ profile, compact = false }) {
       <span>My subscription</span>
       <h2 id="subscription-heading">Your membership</h2>
       <dl className="subscription-facts">
-        <div><dt>Current Plan</dt><dd className="plan-badge">{plan}</dd></div>
+        <div><dt>Current Membership</dt><dd className="plan-badge">{plan}</dd></div>
         <div><dt>Membership Status</dt><dd><span className="status-dot" aria-hidden="true" />{status}</dd></div>
         <div><dt>Additional Membership Features</dt><dd><span className="coming-soon">COMING SOON</span></dd></div>
       </dl>

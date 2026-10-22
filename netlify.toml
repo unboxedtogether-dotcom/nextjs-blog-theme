@@ -7,3 +7,24 @@
   to = "/:splat"
   status = 301
   force = true
+
+# Older and alternative book URLs go to the redesigned book page.
+[[redirects]]
+  from = "/buy-the-book"
+  to = "/book"
+  status = 301
+
+[[redirects]]
+  from = "/the-book"
+  to = "/book"
+  status = 301
+
+[[redirects]]
+  from = "/buy"
+  to = "/book"
+  status = 301
+
+[[redirects]]
+  from = "/unboxed"
+  to = "/book"
+  status = 301
