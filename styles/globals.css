@@ -1721,6 +1721,10 @@ main > section.bg-\[\#0D47B5\]:not(:first-child) p { color: var(--color-muted) !
 .nav-account a, .nav-account button { padding: 0.5rem 0.6rem; border: 0; color: var(--color-deep-blue); background: transparent; font-size: 0.78rem; font-weight: 800; white-space: nowrap; }
 .nav-account button { cursor: pointer; }
 .nav-account .nav-join { padding-inline: 0.9rem; border-radius: 999px; color: white; background: var(--color-royal); }
+.nav-member { display: inline-flex; flex: 0 1 auto; order: 3; min-width: 0; max-width: 13rem; gap: 0.55rem; align-items: center; padding: 0.3rem 0.85rem 0.3rem 0.3rem; border: 1px solid #dfe4fa; border-radius: 999px; color: var(--color-deep-blue); background: white; font-size: 0.82rem; font-weight: 800; text-decoration: none; transition: border-color .2s, box-shadow .2s; }
+.nav-member:hover, .nav-member:focus-visible, .nav-member.is-active { border-color: var(--color-royal); box-shadow: 0 0 0 3px rgba(8, 43, 115, 0.08); }
+.nav-member__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.member-avatar-sm { width: 2.1rem; height: 2.1rem; font-size: 0.8rem; }
 .footer-bottom { display: flex; justify-content: space-between; gap: 1rem; }
 .footer-legal { display: flex; gap: 1.25rem; }
 .footer-legal a:hover { color: var(--color-royal); }
@@ -1979,10 +1983,13 @@ main > section.bg-\[\#0D47B5\]:not(:first-child) p { color: var(--color-muted) !
 .legal-updated { color: var(--color-muted); }
 
 @media (max-width: 1100px) {
+  .nav-member { max-width: 9rem; }
   .nav-account { padding: .8rem 0 0; border-top: 1px solid #e1e6fb; border-left: 0; }
   .nav-account a, .nav-account button { font-size: .9rem; }
 }
 @media (max-width: 860px) {
+  .site-nav { gap: 0.75rem; }
+  .nav-member { order: 0; margin-left: auto; }
   .auth-page { grid-template-columns: 1fr; }
   .auth-brand-panel { min-height: 25rem; }
   .auth-brand-panel h1 { font-size: clamp(3rem, 14vw, 5rem); }
@@ -1992,6 +1999,8 @@ main > section.bg-\[\#0D47B5\]:not(:first-child) p { color: var(--color-muted) !
   .dashboard-baseline { grid-row: auto; }
 }
 @media (max-width: 640px) {
+  .nav-member { padding-right: 0.3rem; }
+  .nav-member__name { display: none; }
   .auth-brand-panel { min-height: 21rem; padding: 1.5rem; }
   .auth-note { display: none; }
   .auth-form-panel { padding: 1rem; }

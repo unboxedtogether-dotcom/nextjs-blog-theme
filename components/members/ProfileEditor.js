@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { updateUser } from '@netlify/identity';
 import FormMessage from '../auth/FormMessage';
+import { useAuth } from '../auth/AuthProvider';
 import MemberAvatar from './MemberAvatar';
 import { avatarMaxBytes, bioLimit } from '../../utils/member-options.mjs';
 import { questionnaireSections } from '../../utils/welcome-questionnaire.mjs';
@@ -36,6 +37,9 @@ async function readJson(response) {
 
 export function AvatarControls({ name, version, onChange }) {
   const input = useRef(null);
+  const { updateMember } = useAuth();
+  // Keeps the header photo in step with the page.
+  const changed = (nextVersion) => { onChange(nextVersion); updateMember({ avatarVersion: nextVersion }); };
   const [status, setStatus] = useState({ busy: false, error: '', success: '' });
 
   const upload = async (event) => {
@@ -47,7 +51,7 @@ export function AvatarControls({ name, version, onChange }) {
       const blob = await prepareAvatar(file);
       if (blob.size > avatarMaxBytes) throw new Error('Please choose an image under 2 MB.');
       const data = await readJson(await fetch('/api/member/avatar', { method: 'PUT', headers: { 'Content-Type': 'image/jpeg' }, body: blob }));
-      onChange(data.avatarUpdatedAt || new Date().toISOString());
+      changed(data.avatarUpdatedAt || new Date().toISOString());
       setStatus({ busy: false, error: '', success: 'Your profile picture has been saved.' });
     } catch (error) {
       setStatus({ busy: false, error: error.message, success: '' });
@@ -57,7 +61,7 @@ export function AvatarControls({ name, version, onChange }) {
     setStatus({ busy: true, error: '', success: '' });
     try {
       await readJson(await fetch('/api/member/avatar', { method: 'DELETE' }));
-      onChange(null);
+      changed(null);
       setStatus({ busy: false, error: '', success: 'Your profile picture has been removed.' });
     } catch (error) {
       setStatus({ busy: false, error: error.message, success: '' });
@@ -90,6 +94,7 @@ export default function ProfileEditor({ profile, about, onSaved, onCancel }) {
     phone: about.phone,
   });
   const [status, setStatus] = useState({ busy: false, error: '', success: '' });
+  const { updateMember } = useAuth();
   const set = (key) => (event) => setForm((current) => ({ ...current, [key]: event.target.value }));
   const toggleReason = (reason) => setForm((current) => ({
     ...current,
@@ -103,6 +108,7 @@ export default function ProfileEditor({ profile, about, onSaved, onCancel }) {
     try {
       await readJson(await fetch('/api/member', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ profile: form }) }));
       if (form.displayName.trim() !== profile.display_name) await updateUser({ data: { full_name: form.displayName.trim() } }).catch(() => {});
+      updateMember({ name: form.displayName.trim() });
       setStatus({ busy: false, error: '', success: 'Your profile has been saved.' });
       onSaved?.({
         profile: { ...profile, display_name: form.displayName.trim(), bio: form.bio.trim() },
