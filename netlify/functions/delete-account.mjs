@@ -1,5 +1,6 @@
 import { admin, getUser, verifyRequestOrigin } from '@netlify/identity';
 import { getDatabase } from '@netlify/database';
+import { avatarKey, avatarStore } from './_shared/avatar-store.mjs';
 
 const db = getDatabase();
 
@@ -13,6 +14,7 @@ export default async function deleteAccount(request) {
     return Response.json({ error: 'Type DELETE MY ACCOUNT to confirm.' }, { status: 422 });
   }
 
+  await avatarStore().delete(avatarKey(user.id));
   await db.sql`DELETE FROM profiles WHERE id = ${user.id}`;
   await admin.deleteUser(user.id);
   return new Response(null, { status: 204 });

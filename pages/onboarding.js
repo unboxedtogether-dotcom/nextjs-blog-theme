@@ -1,97 +1,271 @@
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import SEO from '../components/SEO';
 import BrandLogo from '../components/BrandLogo';
-import { baselineFromDatabase, onboardingQuestions } from '../utils/onboarding-options';
 import { useMemberData } from '../utils/use-member-data';
+import { emptyAnswers, healthSectionNumbers, privacyContactEmail, privacyNoticePath, questionnaireSections, sectionFields } from '../utils/welcome-questionnaire.mjs';
 
-function Choice({ selected, children, onClick }) {
-  return <button type="button" className={`onboarding-choice${selected ? ' is-selected' : ''}`} aria-pressed={selected} onClick={onClick}>{children}</button>;
-}
+const pageTitle = 'Welcome questionnaire | Unboxed Together';
+const pageDescription = 'Tell Unboxed Together about you, what matters to you and what would make everyday life a little easier.';
+const today = () => new Date().toLocaleDateString('en-CA');
+const formatDate = (value) => new Date(value).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
 export default function Onboarding() {
-  const router = useRouter();
-  const { data, loading, error } = useMemberData();
-  const editing = router.query.edit === '1';
+  const { data, loading, error } = useMemberData('/api/questionnaire');
 
-  useEffect(() => {
-    if (!loading && data?.profile?.onboarding_completed && !editing) router.replace('/members');
-  }, [data, editing, loading, router]);
-
-  if (error) {
-    return <main className="onboarding-page" id="main-content"><SEO title="Your starting point | Unboxed Together" description="Set a personal starting point for your Unboxed Together membership." path="/onboarding" /><p className="onboarding-error" role="alert">{error}</p></main>;
+  if (error || loading || !data) {
+    return (
+      <main className="onboarding-page" id="main-content">
+        <SEO title={pageTitle} description={pageDescription} path="/onboarding" />
+        {error ? <p className="onboarding-error" role="alert">{error}</p> : <p className="auth-loading">Loading your questionnaire…</p>}
+      </main>
+    );
   }
 
-  if (loading || !data?.profile || (data.profile.onboarding_completed && !editing)) {
-    return <main className="onboarding-page" id="main-content"><SEO title="Your starting point | Unboxed Together" description="Set a personal starting point for your Unboxed Together membership." path="/onboarding" /><p className="auth-loading">Loading your starting point…</p></main>;
-  }
-
-  return <OnboardingForm initialBaseline={baselineFromDatabase(data.baseline)} editing={editing} />;
+  return <QuestionnaireForm initial={data} />;
 }
 
-function OnboardingForm({ initialBaseline, editing }) {
-  const router = useRouter();
-  const [answers, setAnswers] = useState(initialBaseline);
-  const [step, setStep] = useState(0);
-  const [status, setStatus] = useState({ saving: false, error: '' });
-  const question = onboardingQuestions[step];
-  const finalStep = step === onboardingQuestions.length;
-  const progress = Math.round(((step + (finalStep ? 0 : 1)) / onboardingQuestions.length) * 100);
+function startingStep(initial, requested) {
+  const page = Number(requested);
+  if (page === 1 || (page === 2 && initial.welcome) || (page > 2 && page <= 4 && initial.health)) return page - 1;
+  if (!initial.welcome) return 0;
+  if (!initial.health) return 1;
+  if (!initial.health.sectionSavedAt[3]) return 2;
+  if (!initial.health.sectionSavedAt[4]) return 3;
+  return 0;
+}
 
+function QuestionnaireForm({ initial }) {
+  const router = useRouter();
+  const [answers, setAnswers] = useState(() => {
+    const merged = {
+      ...emptyAnswers(),
+      preferredName: initial.profile.displayName,
+      email: initial.accountEmail,
+      ...(initial.welcome?.answers || {}),
+      ...(initial.health?.answers || {}),
+      marketingConsent: initial.profile.marketingConsent,
+    };
+    if (!merged.baselineDate) merged.baselineDate = today();
+    return merged;
+  });
+  const [welcomeSaved, setWelcomeSaved] = useState(Boolean(initial.welcome));
+  const [savedConsent, setSavedConsent] = useState(initial.health ? { name: initial.health.consentName, date: initial.health.consentGivenAt } : null);
+  const [healthConsent, setHealthConsent] = useState(Boolean(initial.health));
+  const [step, setStep] = useState(() => startingStep(initial, router.query.page));
+  const [status, setStatus] = useState({ saving: false, error: '' });
+
+  const finished = step === questionnaireSections.length;
+  const section = questionnaireSections[step];
   const setAnswer = (key, value) => setAnswers((current) => ({ ...current, [key]: value }));
-  const toggle = (key, value, max) => {
-    const current = answers[key];
-    if (current.includes(value)) setAnswer(key, current.filter((item) => item !== value));
-    else if (current.length < max) setAnswer(key, [...current, value]);
-  };
-  const isAnswered = !question || question.optional || (Array.isArray(answers[question.key]) ? answers[question.key].length > 0 : answers[question.key] !== null && answers[question.key] !== '');
-  const next = () => {
-    if (!isAnswered) return setStatus({ saving: false, error: 'Choose an answer to continue.' });
-    setStatus({ saving: false, error: '' });
-    setStep((current) => current + 1);
-  };
-  const save = async () => {
+  const goTo = (next) => { setStatus({ saving: false, error: '' }); setStep(next); window.scrollTo({ top: 0 }); };
+  const canOpen = (index) => index === 0 || (index === 1 && welcomeSaved) || (index > 1 && Boolean(savedConsent));
+
+  const save = async (after) => {
+    if (section.number === 1) {
+      if (!answers.preferredName.trim()) return setStatus({ saving: false, error: 'Please enter the name you would like us to use.' });
+      if (!answers.email.trim()) return setStatus({ saving: false, error: 'Please enter your email address.' });
+      if (!answers.adultConfirmed) return setStatus({ saving: false, error: 'Please confirm you are aged 18 or over to set up an adult membership.' });
+    }
     setStatus({ saving: true, error: '' });
-    const response = await fetch('/api/member', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ baseline: answers }) });
-    const data = response.status === 204 ? {} : await response.json();
-    if (!response.ok) return setStatus({ saving: false, error: data.error || 'We could not save your answers.' });
-    router.push(editing ? '/members/profile?saved=1' : '/members');
+    try {
+      const response = await fetch('/api/questionnaire', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ section: section.number, answers, healthConsent }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'We could not save your answers.');
+      if (section.number === 1) setWelcomeSaved(true);
+      if (section.number === 2) setSavedConsent(healthConsent ? (savedConsent || { name: answers.preferredName, date: new Date().toISOString() }) : null);
+      if (section.number === 2 && !healthConsent && savedConsent) {
+        const blank = emptyAnswers();
+        const healthKeys = healthSectionNumbers.flatMap((number) => sectionFields(number).map((field) => field.key));
+        setAnswers((current) => ({ ...current, ...Object.fromEntries(healthKeys.map((key) => [key, blank[key]])), baselineDate: today() }));
+      }
+      setStatus({ saving: false, error: '' });
+      after();
+    } catch (error) {
+      setStatus({ saving: false, error: error.message });
+    }
   };
+
+  const continueLabel = section?.number === 2 && !healthConsent ? (savedConsent ? 'Withdraw consent and continue' : 'Skip pages 2 to 4') : section?.number === 4 ? 'Save my answers' : 'Save and continue';
+  const afterContinue = () => goTo(section.number === 2 && !healthConsent ? questionnaireSections.length : step + 1);
 
   return (
     <main className="onboarding-page" id="main-content">
-      <SEO title={`${editing ? 'Review your answers' : 'Your starting point'} | Unboxed Together`} description="Set a personal starting point for your Unboxed Together membership." path="/onboarding" />
-      <header className="onboarding-header"><BrandLogo /><span>{editing ? 'Review answers' : 'Your starting point'}</span></header>
-      <div className="onboarding-progress" aria-label={`Onboarding progress: ${progress}%`}><span style={{ width: `${progress}%` }} /></div>
-      <section className="onboarding-card">
-        {!finalStep ? (
-          <>
-            <p className="onboarding-count">Question {step + 1} of {onboardingQuestions.length}</p>
-            <h1>{question.heading}</h1>
-            {question.help && <p className="onboarding-help">{question.help}</p>}
-            <div className={`onboarding-options onboarding-options-${question.type}`}>
-              {question.type === 'multi' && question.options.map((option) => <Choice key={option} selected={answers[question.key].includes(option)} onClick={() => toggle(question.key, option, question.max)}>{option}</Choice>)}
-              {question.type === 'single' && question.options.map((option) => <Choice key={option} selected={answers[question.key] === option} onClick={() => setAnswer(question.key, option)}>{option}</Choice>)}
-              {question.type === 'score' && question.options.map((option, index) => <Choice key={option} selected={answers[question.key] === index + 1} onClick={() => setAnswer(question.key, index + 1)}><span className="choice-number">{index + 1}</span>{option}</Choice>)}
-              {question.type === 'scale' && <><div className="scale-labels"><span>1 — {question.low}</span><span>5 — {question.high}</span></div><div className="scale-buttons">{[1, 2, 3, 4, 5].map((value) => <Choice key={value} selected={answers[question.key] === value} onClick={() => setAnswer(question.key, value)}>{value}</Choice>)}</div>{question.optional && <Choice selected={answers[question.key] === null} onClick={() => setAnswer(question.key, null)}>Prefer not to answer</Choice>}</>}
-            </div>
-            {status.error && <p className="onboarding-error" role="alert">{status.error}</p>}
-            <div className="onboarding-actions">{step > 0 ? <button type="button" className="member-button secondary" onClick={() => setStep(step - 1)}>Back</button> : <span />}<button type="button" className="member-button" onClick={next}>Continue</button></div>
-          </>
-        ) : (
+      <SEO title={pageTitle} description={pageDescription} path="/onboarding" />
+      <header className="onboarding-header"><BrandLogo /><span>Welcome questionnaire</span></header>
+      <nav className="wq-steps" aria-label="Questionnaire pages">
+        {questionnaireSections.map((item, index) => (
+          <button key={item.number} type="button" className={`wq-step${index === step ? ' is-current' : ''}`} aria-current={index === step ? 'step' : undefined} disabled={!canOpen(index)} onClick={() => goTo(index)}>
+            <span>{item.number}</span>{item.title}
+          </button>
+        ))}
+      </nav>
+      <section className="onboarding-card wq-card">
+        {finished ? (
           <div className="onboarding-finish">
-            <p className="onboarding-count">Starting point complete</p>
-            <h1>You are ready to begin.</h1>
-            <p>Your starting point has been saved. Over time, you will be able to revisit these same pillars and see what has changed for you.</p>
-            <div className="onboarding-review"><strong>Your priorities</strong><p>{answers.improvementGoals.join(' · ')}</p></div>
-            {status.error && <p className="onboarding-error" role="alert">{status.error}</p>}
-            <div className="finish-actions"><button className="member-button" type="button" disabled={status.saving} onClick={save}>{status.saving ? 'Saving…' : editing ? 'Save my answers' : 'Enter my dashboard'}</button><button className="member-button secondary" type="button" onClick={() => setStep(0)}>Review my answers</button></div>
-            <p className="onboarding-disclaimer">This information helps personalise your experience and measure changes over time. Unboxed Together is educational and is not a substitute for medical advice.</p>
+            <p className="onboarding-count">Answers saved</p>
+            <h1>Thank you.</h1>
+            <p>Your answers are saved to your account. You can come back to review or update them at any time from your dashboard or profile.</p>
+            <div className="finish-actions"><Link className="member-button" href="/members">Go to my dashboard</Link><button className="member-button secondary" type="button" onClick={() => goTo(0)}>Review my answers</button></div>
           </div>
+        ) : (
+          <form onSubmit={(event) => { event.preventDefault(); save(afterContinue); }} noValidate>
+            <p className="onboarding-count">Page {section.number} of {questionnaireSections.length}</p>
+            <h1>{section.title}</h1>
+            {section.tagline && <p className="wq-tagline">{section.tagline}</p>}
+            {section.number > 2 && !savedConsent ? (
+              <p className="wq-paragraph">{questionnaireSections[1].blocks.find((block) => block.kind === 'consent').skipText}</p>
+            ) : (
+              <SectionBlocks section={section} answers={answers} setAnswer={setAnswer} healthConsent={healthConsent} setHealthConsent={setHealthConsent} savedConsent={savedConsent} />
+            )}
+            {status.error && <p className="onboarding-error" role="alert">{status.error}</p>}
+            <div className="onboarding-actions wq-actions">
+              {step > 0 ? <button type="button" className="member-button secondary" onClick={() => goTo(step - 1)}>Back</button> : <span />}
+              <div>
+                {welcomeSaved && <button type="button" className="text-button" disabled={status.saving} onClick={() => save(() => router.push('/members'))}>Save and finish later</button>}
+                <button type="submit" className="member-button" disabled={status.saving}>{status.saving ? 'Saving…' : continueLabel}</button>
+              </div>
+            </div>
+          </form>
         )}
       </section>
-      <p className="onboarding-privacy">Your answers stay connected to your account and are not sent to analytics. Read our <Link href="/privacy">Privacy Policy</Link>.</p>
+      <p className="onboarding-privacy">Your answers stay connected to your account, are never emailed and are not sent to analytics. Read our <Link href={privacyNoticePath}>Privacy Policy</Link>.</p>
     </main>
+  );
+}
+
+function SectionBlocks({ section, answers, setAnswer, healthConsent, setHealthConsent, savedConsent }) {
+  const consentIndex = section.blocks.findIndex((block) => block.kind === 'consent');
+  const visibleBlocks = consentIndex >= 0 && !healthConsent ? section.blocks.slice(0, consentIndex + 1) : section.blocks;
+
+  return visibleBlocks.map((block, index) => {
+    const id = `s${section.number}-b${index}`;
+    if (block.kind === 'heading') return <h2 key={id} className="wq-heading">{block.text}</h2>;
+    if (block.kind === 'paragraph') return <p key={id} className="wq-paragraph">{block.text}</p>;
+    if (block.kind === 'note') return <p key={id} className="wq-note">{block.text}</p>;
+    if (block.kind === 'privacy') {
+      return (
+        <div key={id} className="wq-privacy">
+          <p>Privacy notice: <Link href={privacyNoticePath}>unboxedtogether.com{privacyNoticePath}</Link></p>
+          <p>Privacy contact: <a href={`mailto:${privacyContactEmail}`}>{privacyContactEmail}</a></p>
+        </div>
+      );
+    }
+    if (block.kind === 'consent') {
+      return (
+        <div key={id} className="wq-consent">
+          <h2 className="wq-heading">{block.heading}</h2>
+          <label className="wq-checkbox"><input type="checkbox" checked={healthConsent} onChange={(event) => setHealthConsent(event.target.checked)} /><span>{block.label}</span></label>
+          <dl className="wq-consent-record">
+            <div><dt>Name:</dt><dd>{savedConsent?.name || answers.preferredName}</dd></div>
+            <div><dt>Date:</dt><dd>{formatDate(savedConsent?.date || new Date())}</dd></div>
+          </dl>
+          <p className="wq-paragraph">{block.skipText}</p>
+          {savedConsent && !healthConsent && <p className="wq-warning" role="alert">Continuing with this box unticked withdraws your consent and permanently deletes your answers on pages 2 to 4.</p>}
+        </div>
+      );
+    }
+    return <Question key={id} id={id} question={block} answers={answers} setAnswer={setAnswer} />;
+  });
+}
+
+function Question({ id, question, answers, setAnswer }) {
+  const labelId = `${id}-label`;
+  return (
+    <fieldset className="wq-question" aria-labelledby={question.label ? labelId : undefined}>
+      {question.label && (
+        <legend id={labelId} className="wq-question-label">
+          {question.number && <span className="wq-number">{question.number}.</span>}{question.label}{question.required && <span className="wq-required" aria-hidden="true"> *</span>}
+        </legend>
+      )}
+      {question.help && <p className="wq-help">{question.help}</p>}
+      <div className="wq-fields">
+        {question.fields.map((field) => (
+          <Field key={field.key} field={field} question={question} labelId={question.label ? labelId : undefined} value={answers[field.key]} answers={answers} setAnswer={setAnswer} />
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
+function Field({ field, question, labelId, value, answers, setAnswer }) {
+  const inputId = `wq-${field.key}`;
+  const labelledBy = field.label ? undefined : labelId;
+
+  if (field.type === 'checkbox') {
+    return (
+      <label className="wq-checkbox">
+        <input id={inputId} type="checkbox" checked={value === true} required={field.required} onChange={(event) => setAnswer(field.key, event.target.checked)} />
+        <span>{!question.label && question.number && <span className="wq-number">{question.number}.</span>}{field.label}{field.required && <span className="wq-required" aria-hidden="true"> *</span>}</span>
+      </label>
+    );
+  }
+
+  if (field.type === 'multi' || field.type === 'single') {
+    const selected = field.type === 'multi' ? value || [] : value;
+    const choose = (option) => {
+      if (field.type === 'single') return setAnswer(field.key, selected === option ? '' : option);
+      return setAnswer(field.key, selected.includes(option) ? selected.filter((item) => item !== option) : [...selected, option]);
+    };
+    return (
+      <div className="wq-field">
+        <div className="wq-choices" role="group" aria-labelledby={labelId}>
+          {field.options.map((option) => {
+            const isSelected = field.type === 'multi' ? selected.includes(option) : selected === option;
+            return <button key={option} type="button" className={`onboarding-choice${isSelected ? ' is-selected' : ''}`} aria-pressed={isSelected} onClick={() => choose(option)}>{option}</button>;
+          })}
+        </div>
+        {field.otherKey && selected.includes('Other') && (
+          <input className="wq-input" aria-label="Other" value={answers[field.otherKey] || ''} maxLength={300} onChange={(event) => setAnswer(field.otherKey, event.target.value)} />
+        )}
+      </div>
+    );
+  }
+
+  if (field.type === 'scale') {
+    return (
+      <div className="wq-scale" role="group" aria-label={field.label}>
+        <div className="wq-scale-text"><strong>{field.label}</strong><span>{field.note}</span></div>
+        <div className="wq-scale-buttons">
+          {[1, 2, 3, 4, 5].map((number) => (
+            <button key={number} type="button" className={`onboarding-choice${value === number ? ' is-selected' : ''}`} aria-pressed={value === number} onClick={() => setAnswer(field.key, value === number ? null : number)}>{number}</button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const shared = {
+    id: inputId,
+    className: field.type === 'textarea' ? 'wq-input wq-textarea' : 'wq-input',
+    'aria-labelledby': labelledBy,
+    value: value ?? '',
+    required: field.required,
+    onChange: (event) => setAnswer(field.key, ['integer', 'decimal'].includes(field.type) && event.target.value === '' ? null : event.target.value),
+  };
+  const typeProps = {
+    text: { type: 'text', maxLength: 300, autoComplete: field.autoComplete },
+    email: { type: 'email', maxLength: 254, autoComplete: field.autoComplete },
+    tel: { type: 'tel', maxLength: 40, autoComplete: field.autoComplete },
+    integer: { type: 'number', inputMode: 'numeric', min: field.min, max: field.max, step: 1 },
+    decimal: { type: 'number', inputMode: 'decimal', min: field.min, max: field.max, step: 0.5 },
+    time: { type: 'time' },
+    date: { type: 'date' },
+  }[field.type];
+
+  return (
+    <div className={`wq-field${field.inline ? ' wq-inline' : ''}`}>
+      {field.intro && <p className="wq-help">{field.intro}</p>}
+      {field.label && <label htmlFor={inputId}>{field.label}</label>}
+      {field.prefix && <span>{field.prefix}</span>}
+      {field.type === 'textarea' ? <textarea {...shared} rows={4} maxLength={3000} /> : <input {...shared} {...typeProps} />}
+      {field.suffix && <span>{field.suffix}</span>}
+      {field.help && <p className="wq-help">{field.help}</p>}
+    </div>
   );
 }
