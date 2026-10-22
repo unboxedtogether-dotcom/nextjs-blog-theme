@@ -7,8 +7,10 @@ import WelcomeFormCard from './WelcomeFormCard';
 import ProgressComingSoon from './ProgressComingSoon';
 import SubscriptionCard from './SubscriptionCard';
 import ContactForm from './ContactForm';
+import CommunityComingSoon from './CommunityComingSoon';
+import { BrandImage } from '../BrandLogo';
 
-const sectionLinks = [['#my-profile', 'My profile'], ['#my-welcome-form', 'Welcome form'], ['#my-progress', 'Progress'], ['#my-subscription', 'Subscription'], ['#contact', 'Contact us']];
+const sectionLinks = [['#my-profile', 'My profile'], ['#my-welcome-form', 'Welcome form'], ['#my-progress', 'Progress'], ['#my-community', 'Community'], ['#my-subscription', 'Subscription'], ['#contact', 'Contact us']];
 
 function ProfileSummary({ profile, about, onEdit }) {
   const empty = !profile.bio && !about.interests && !about.reasons.length;
@@ -36,6 +38,7 @@ export default function Dashboard({ initial, email, seo, notice = null }) {
       {notice}
       <div className="member-page dashboard-page">
         <header className="member-hero dashboard-hero">
+          <BrandImage variant="horizontal" className="dashboard-hero__logo" alt="" sizes="140px" />
           <MemberAvatar name={profile.display_name} version={avatarVersion} size="xl" />
           <div>
             <p className="member-kicker">Your member space</p>
@@ -63,6 +66,7 @@ export default function Dashboard({ initial, email, seo, notice = null }) {
           <div id="my-welcome-form"><WelcomeFormCard questionnaire={initial.questionnaire} /></div>
           <div id="my-subscription"><SubscriptionCard profile={profile} /></div>
           <div id="my-progress"><ProgressComingSoon /></div>
+          <div id="my-community"><CommunityComingSoon /></div>
 
           <Link className="dashboard-card dashboard-card-primary additive-shortcut" href="/additives">
             <span>Additive search</span>
@@ -83,8 +87,8 @@ export default function Dashboard({ initial, email, seo, notice = null }) {
           {initial.isAdmin && (
             <Link className="dashboard-card account-shortcut" href="/members/admin">
               <span>Team only</span>
-              <h2>Member questionnaires and messages</h2>
-              <p>Read-only access to members’ answers and private messages.</p>
+              <h2>Questionnaires, messages and book reviews</h2>
+              <p>Read-only access to members’ answers and private messages, plus book review moderation.</p>
               <strong>Open team area →</strong>
             </Link>
           )}

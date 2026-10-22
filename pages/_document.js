@@ -9,7 +9,10 @@ class MyDocument extends Document {
     return (
       <Html lang="en">
         <Head>
+          <link rel="icon" href="/favicon.ico" sizes="any" />
           <link rel="icon" href="/favicon.png" type="image/png" />
+          <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+          <meta name="theme-color" content="#1843f4" />
           <style>{`:root{${cssVars}}`}</style>
         </Head>
         <body className="antialiased text-lg bg-white text-gray-900 leading-relaxed">

@@ -18,7 +18,11 @@ export const siteConfig = {
 
   // Book Info
   bookTitle: 'Unboxed – The Dirty Secret Hiding In Our Diet',
+  bookAuthor: 'Lee Jones',
+  bookIsbn: '9781068174391',
   bookLinks: {
+    // Official IngramSpark direct purchase page (checkout happens on IngramSpark).
+    ingramSpark: 'https://shop.ingramspark.com/b/084?params=xDHgHiZVFNQRqZHwQ8ZEXMkfWu3WR8XA30E9lb0WIPF',
     ingramDirect: 'https://igit.me/Unboxed',
     amazonUK: 'https://amzn.eu/d/e4oZvno',
     amazonKindle: 'https://amzn.eu/d/hLbmBWi',
@@ -26,6 +30,8 @@ export const siteConfig = {
     blackwells: 'https://blackwells.co.uk/bookshop/product/Unboxed-by-Lee-J-Jones/9781068174391',
     amazonReview: 'https://www.amazon.co.uk/gp/customer-reviews/R1PTO2E32H47DI?ref_=cm_sw_r_mwn_dprv_ZF0J7NZMJ3V0DBCD186F&language=en-US',
     waterstonesReviews: 'https://www.waterstones.com/book/unboxed/lee-j-jones/9781068174391#reviews',
+    // Amazon's review form for the paperback listing (ASIN 1068174390, reached from amazonUK).
+    amazonWriteReview: 'https://www.amazon.co.uk/review/create-review?asin=1068174390',
   },
 
   // Published Brainz Magazine articles
@@ -49,14 +55,31 @@ export const siteConfig = {
     award: 'Selected Brainz Top 500 Global Entrepreneurs Awards',
   },
 
-  // Verified customer reviews only
-  customerReviews: [],
+  // Genuine reader reviews supplied by Unboxed Together. Use only the supplied text.
+  customerReviews: [
+    {
+      rating: 5,
+      headline: 'Great concept and beautifully presented',
+      name: 'Ronny M.',
+      verifiedPurchase: true,
+      edition: 'Paperback',
+      text: "I recently bought Unboxed by Lee Jones at Waterstones and I'm really looking forward to reading it. The concept is intriguing and the book itself is beautifully presented.",
+    },
+    {
+      rating: 5,
+      headline: 'Great book and really insightful',
+      name: 'Sophie Gladstone',
+      edition: 'Paperback',
+      date: '2026-06-03',
+      text: 'Really enjoyed this book..it was so interesting, full of facts and helpful advice on how adhd is massively affected by our diet.',
+    },
+  ],
 
   // SEO
   seo: {
     home: {
-      title: 'Unboxed Together | Understand Food Additives',
-      description: 'A simple barcode-scanning app to help people understand food additives and make clearer choices. Join our early testers.',
+      title: 'Unboxed Together | Understand Your Food. Understand Yourself.',
+      description: 'Explore ingredients, understand food labels, discover the book Unboxed and connect with a community built around learning, sharing and supporting one another.',
     },
     additives: {
       title: 'Search Food Additives | Unboxed Together',
@@ -75,10 +98,20 @@ export const siteConfig = {
       description: 'Publications and features in Brainz Magazine by Unboxed Together.',
     },
     book: {
-      title: 'Buy the Book | Unboxed Together',
-      description: 'Get Unboxed – The Dirty Secret Hiding In Our Diet. Available on Amazon, Waterstones, and more.',
+      title: 'Unboxed: The Dirty Secret Hiding in Our Diet | Lee Jones',
+      description: 'Discover Unboxed by Lee Jones, a personal journey exploring modern food, nutrition, ADHD, burnout and wellbeing. Read reviews and find out where to buy.',
+    },
+    community: {
+      title: 'Community | Unboxed Together',
+      description: 'A place to learn, connect and support one another. Create your free Unboxed Together member profile.',
+    },
+    barcodeChallenge: {
+      title: 'The 30-Day Barcode Challenge — Coming Soon | Unboxed Together',
+      description: 'A practical challenge encouraging people to explore everyday ingredients, understand food labels and discover alternatives.',
     },
   },
+
+  brandDescription: 'Understand your food. Understand yourself. Find your community.',
 
   // Legal
   disclaimer: 'Information provided is educational and not medical advice.',

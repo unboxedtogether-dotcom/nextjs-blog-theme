@@ -1,8 +1,10 @@
 const upcoming = [
   { title: '30-Day Barcode Challenge', text: 'A simple daily rhythm for looking past the front of the packet.' },
-  { title: 'Food and drink journal', text: 'Note what you eat and drink, and how you feel afterwards.' },
-  { title: 'Sleep and mood tracking', text: 'Gently notice patterns in your sleep, energy and mood.' },
-  { title: 'Weekly and monthly progress comparisons', text: 'Look back on your starting point and see what has changed.' },
+  { title: 'Food journal', text: 'Note what you eat, and how you feel afterwards.' },
+  { title: 'Drink tracking', text: 'Keep track of what you drink through the day.' },
+  { title: 'Sleep tracking', text: 'Gently notice patterns in your sleep.' },
+  { title: 'Mood and energy tracking', text: 'See how your mood and energy change over time.' },
+  { title: 'Weekly and monthly comparisons', text: 'Look back on your starting point and see what has changed.' },
 ];
 
 export default function ProgressComingSoon() {

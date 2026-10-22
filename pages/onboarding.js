@@ -5,6 +5,7 @@ import SEO from '../components/SEO';
 import BrandLogo from '../components/BrandLogo';
 import { useMemberData } from '../utils/use-member-data';
 import { emptyAnswers, healthSectionNumbers, privacyContactEmail, privacyNoticePath, questionnaireSections, sectionFields } from '../utils/welcome-questionnaire.mjs';
+import BrandLoader from '../components/BrandLoader';
 
 const pageTitle = 'Welcome questionnaire | Unboxed Together';
 const pageDescription = 'Tell Unboxed Together about you, what matters to you and what would make everyday life a little easier.';
@@ -18,7 +19,7 @@ export default function Onboarding() {
     return (
       <main className="onboarding-page" id="main-content">
         <SEO title={pageTitle} description={pageDescription} path="/onboarding" />
-        {error ? <p className="onboarding-error" role="alert">{error}</p> : <p className="auth-loading">Loading your questionnaire…</p>}
+        {error ? <p className="onboarding-error" role="alert">{error}</p> : <BrandLoader label="Loading your questionnaire…" />}
       </main>
     );
   }
