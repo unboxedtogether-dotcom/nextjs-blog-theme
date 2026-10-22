@@ -5,6 +5,7 @@ import { siteConfig } from '../utils/site-config';
 import { logout } from '@netlify/identity';
 import { useAuth } from './auth/AuthProvider';
 import BrandLogo from './BrandLogo';
+import MemberAvatar from './members/MemberAvatar';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -19,7 +20,8 @@ const navLinks = [
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, member } = useAuth();
+  const memberName = member?.name || user?.name || user?.email?.split('@')[0] || 'My profile';
   const signOut = async () => {
     setIsOpen(false);
     await logout();
@@ -30,6 +32,17 @@ export default function Navigation() {
     <header className="site-header">
       <nav className="site-nav" aria-label="Primary navigation">
         <BrandLogo />
+        {!loading && user && (
+          <Link
+            href="/members/profile"
+            className={`nav-member${router.pathname === '/members/profile' ? ' is-active' : ''}`}
+            aria-label={`${memberName}: view your profile`}
+            onClick={() => setIsOpen(false)}
+          >
+            <MemberAvatar name={memberName} version={member?.avatarVersion} size="sm" />
+            <span className="nav-member__name">{memberName}</span>
+          </Link>
+        )}
         <button
           type="button"
           className="nav-toggle"
@@ -59,7 +72,6 @@ export default function Navigation() {
             {!loading && (user ? (
               <>
                 <Link href="/members" onClick={() => setIsOpen(false)}>My dashboard</Link>
-                <Link href="/members/profile" onClick={() => setIsOpen(false)}>Account</Link>
                 <button type="button" onClick={signOut}>Log out</button>
               </>
             ) : (
