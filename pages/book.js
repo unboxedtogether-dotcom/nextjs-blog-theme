@@ -7,6 +7,7 @@ import SEO from '../components/SEO';
 import ReviewCard from '../components/book/ReviewCard';
 import ReviewForm from '../components/book/ReviewForm';
 import { siteConfig } from '../utils/site-config';
+import { useAuth } from '../components/auth/AuthProvider';
 
 const { bookLinks } = siteConfig;
 const pageUrl = `https://${siteConfig.domain}/book`;
@@ -38,7 +39,7 @@ const reviewPlatforms = [
 const closingCards = [
   { title: 'Explore our food database', text: "Search ingredients and additives and learn more about what's in everyday products.", href: '/additives', cta: 'Explore the database' },
   { title: 'The 30-Day Barcode Challenge', text: 'Discover a practical way to become more aware of everyday ingredients and food choices.', href: '/barcode-challenge', cta: 'Learn more', soon: true },
-  { title: 'Join Unboxed Together', text: 'Create your free account, explore the community and access available resources.', href: '/signup', cta: 'Join for free' },
+  { title: 'Join Unboxed Together', text: 'Create your free account, explore the community and access available resources.', href: '/signup', cta: 'Join for free', memberHref: '/members', memberCta: 'Go to my dashboard' },
 ];
 
 function ExternalLink({ href, className, children, label }) {
@@ -79,6 +80,7 @@ function bookJsonLd(reviews) {
 
 export default function Book() {
   const [siteReviews, setSiteReviews] = useState([]);
+  const { user } = useAuth();
 
   useEffect(() => {
     fetch('/api/reviews')
@@ -276,7 +278,7 @@ export default function Book() {
                   {card.soon && <span className="soon-badge">Coming soon</span>}
                   <h3>{card.title}</h3>
                   <p>{card.text}</p>
-                  <Link href={card.href} className={`ut-btn ${card.soon ? 'ut-btn--secondary' : 'ut-btn--primary'}`}>{card.cta}</Link>
+                  <Link href={(user && card.memberHref) || card.href} className={`ut-btn ${card.soon ? 'ut-btn--secondary' : 'ut-btn--primary'}`}>{(user && card.memberCta) || card.cta}</Link>
                 </li>
               ))}
             </ul>

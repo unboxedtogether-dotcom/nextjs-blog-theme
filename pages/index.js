@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Layout from '../components/Layout';
 import SEO from '../components/SEO';
 import { BrandImage } from '../components/BrandLogo';
+import { useAuth } from '../components/auth/AuthProvider';
 import { siteConfig } from '../utils/site-config';
 
 const pillarIcons = {
@@ -33,6 +34,9 @@ const pillars = [
     text: ['A place to learn, connect and support one another.', 'Create your free member profile, tell us what brings you here and explore the support available.'],
     href: '/signup',
     cta: 'Join for free',
+    // Shown instead to signed-in members.
+    memberHref: '/members',
+    memberCta: 'Go to my dashboard',
   },
 ];
 
@@ -44,6 +48,7 @@ const appFeatures = [
 
 export default function Home() {
   const [formStatus, setFormStatus] = useState('idle');
+  const { user } = useAuth();
 
   const handleFormSubmit = async (event) => {
     event.preventDefault();
@@ -84,11 +89,13 @@ export default function Home() {
             <p>Explore ingredients, understand food labels, discover our book and connect with a community built around learning, sharing and supporting one another.</p>
             <div className="button-row">
               <Link href="/additives" className="ut-btn ut-btn--primary">Explore our food database</Link>
-              <Link href="/signup" className="ut-btn ut-btn--secondary">Join Unboxed Together — free</Link>
+              {user
+                ? <Link href="/members" className="ut-btn ut-btn--secondary">Go to my dashboard</Link>
+                : <Link href="/signup" className="ut-btn ut-btn--secondary">Join Unboxed Together — free</Link>}
             </div>
           </div>
           <div className="home-intro__logo">
-            <BrandImage variant="vertical" alt="Unboxed Together logo" priority sizes="(max-width: 860px) 45vw, 300px" />
+            <BrandImage variant="horizontal" alt="Unboxed Together logo" priority sizes="(max-width: 860px) 45vw, 300px" />
           </div>
         </div>
       </section>
@@ -104,7 +111,7 @@ export default function Home() {
                 </span>
                 <h3>{pillar.title}</h3>
                 {pillar.text.map((line) => <p key={line}>{line}</p>)}
-                <Link href={pillar.href} className="ut-btn ut-btn--primary">{pillar.cta}</Link>
+                <Link href={(user && pillar.memberHref) || pillar.href} className="ut-btn ut-btn--primary">{(user && pillar.memberCta) || pillar.cta}</Link>
               </li>
             ))}
           </ul>
