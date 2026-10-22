@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../components/auth/AuthProvider';
 
-export function useMemberData() {
+export function useMemberData(endpoint = '/api/member') {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const [state, setState] = useState({ data: null, loading: true, error: '' });
@@ -15,7 +15,7 @@ export function useMemberData() {
     }
 
     const controller = new AbortController();
-    fetch('/api/member', { signal: controller.signal })
+    fetch(endpoint, { signal: controller.signal })
       .then(async (response) => {
         const data = await response.json();
         if (response.status === 401) {
@@ -30,7 +30,7 @@ export function useMemberData() {
       });
 
     return () => controller.abort();
-  }, [authLoading, router, user]);
+  }, [authLoading, endpoint, router, user]);
 
   return { ...state, user };
 }

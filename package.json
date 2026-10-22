@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@mapbox/rehype-prism": "^0.9.0",
+    "@netlify/blobs": "^11.1.6",
     "@netlify/database": "^1.1.0",
     "@netlify/identity": "^1.2.0",
     "@tailwindcss/typography": "^0.5.19",
