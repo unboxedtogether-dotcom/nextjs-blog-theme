@@ -7,7 +7,7 @@ export const siteConfig = {
 
   // Contact
   email: 'support@unboxedtogether.com',
-  mediaEmail: 'unboxedtogether@gmail.com',
+  mediaEmail: 'support@unboxedtogether.com',
 
   // Social Links
   social: {
