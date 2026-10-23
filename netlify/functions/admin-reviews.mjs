@@ -1,17 +1,20 @@
 import { getDatabase } from '@netlify/database';
 import { getUser, verifyRequestOrigin } from '@netlify/identity';
+import { authoriseAdmin, notAllowlistedMessage } from './_shared/member-access.mjs';
 
 const db = getDatabase();
 const query = async (text, params = []) => (await db.pool.query(text, params)).rows;
 const statuses = ['pending', 'approved', 'rejected', 'removed'];
 const uuidPattern = /^[0-9a-f-]{36}$/i;
 
-// Book review moderation for Identity users with the `admin` role.
+// Book review moderation for allowlisted admins (Identity `admin` role plus the database allowlist),
+// because the moderation list includes reviewers' email addresses.
 // Moderators change publication status only; review text and ratings are never edited.
 export default async function adminReviews(request) {
   const user = await getUser();
   if (!user) return Response.json({ error: 'Please log in to continue.' }, { status: 401 });
   if (!(user.roles || []).includes('admin')) return Response.json({ error: 'You do not have access to book reviews.' }, { status: 403 });
+  if (!(await authoriseAdmin(user))) return Response.json({ error: notAllowlistedMessage }, { status: 403 });
 
   if (request.method === 'GET') {
     const reviews = await query(`
