@@ -59,6 +59,7 @@ export default function SubmissionVersions({ detail, onClose }) {
         </div>
       )}
       <dl className="submission-meta">
+        {version.entry_date && <div><dt>Dated</dt><dd>{new Date(`${version.entry_date}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}</dd></div>}
         <div><dt>Submitted</dt><dd>{formatDate(version.submitted_at)}</dd></div>
         <div><dt>Status</dt><dd>{submissionStatus(version)}</dd></div>
         <div><dt>Form version</dt><dd>{version.form_version}</dd></div>

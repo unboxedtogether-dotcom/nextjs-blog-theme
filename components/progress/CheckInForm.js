@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { missingRequired, scoreCategories, unscoredItems } from '../../utils/progress-checkin.mjs';
+import { formatDay } from './ProgressOverview';
 
 const steps = [...scoreCategories.map((category) => ({ key: category.key, title: category.fullLabel, intro: category.intro, items: category.items })), { key: 'week', title: 'About your week', intro: 'Optional and not scored.', items: unscoredItems }];
 const formatTime = (value) => new Date(value).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
@@ -55,7 +56,9 @@ function Question({ item, value, onChange }) {
 
 // Baseline (Week 0) and weekly check-in share these exact questions so the
 // scores can be compared. Scores are calculated on the server after saving.
-export default function CheckInForm({ formType, initialAnswers = {}, draftSavedAt = null, revisionOf = null, revisionReasons = [], onSaved, onCancel }) {
+// `dateRange` ({ min, max, initial }) shows the "date of this check-in" field.
+export default function CheckInForm({ formType, initialAnswers = {}, draftSavedAt = null, revisionOf = null, revisionReasons = [], dateRange = null, onSaved, onCancel }) {
+  const [entryDate, setEntryDate] = useState(() => dateRange?.initial || dateRange?.max || '');
   const [answers, setAnswers] = useState(() => ({ weekContext: [], personalNote: '', ...initialAnswers }));
   const [step, setStep] = useState(0);
   const [reason, setReason] = useState('');
@@ -84,13 +87,17 @@ export default function CheckInForm({ formType, initialAnswers = {}, draftSavedA
 
   const submit = async (allowIncomplete = false) => {
     if (revisionOf && !reason) return setStatus((previous) => ({ ...previous, error: 'Please choose why you are correcting this check-in.' }));
+    if (dateRange && (!entryDate || entryDate < dateRange.min || entryDate > dateRange.max)) {
+      setStep(0);
+      return setStatus((previous) => ({ ...previous, error: `Please choose a date between ${formatDay(dateRange.min)} and ${formatDay(dateRange.max)}.` }));
+    }
     if (!allowIncomplete && missingRequired(answers).length) return setStatus((previous) => ({ ...previous, error: '', confirmIncomplete: true }));
     setStatus((previous) => ({ ...previous, saving: true, error: '', confirmIncomplete: false }));
     try {
       const response = await fetch('/api/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'submit', formType, answers, idempotencyKey: idempotencyKey.current, revisionOf, revisionReason: reason || undefined }),
+        body: JSON.stringify({ action: 'submit', formType, answers, entryDate: dateRange ? entryDate : undefined, idempotencyKey: idempotencyKey.current, revisionOf, revisionReason: reason || undefined }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || 'Your check-in could not be saved. Please try again.');
@@ -107,8 +114,17 @@ export default function CheckInForm({ formType, initialAnswers = {}, draftSavedA
   return (
     <form className="checkin-form" onSubmit={(event) => { event.preventDefault(); if (last) submit(); else goTo(step + 1); }} noValidate>
       <div className="ci-progress" aria-hidden="true">{steps.map((item, index) => <span key={item.key} className={index <= step ? 'is-done' : ''} />)}</div>
-      <p className="onboarding-count">Step {step + 1} of {steps.length} · Think about the past 7 days</p>
+      <p className="onboarding-count">Step {step + 1} of {steps.length} · Think about the {dateRange ? '7 days up to the date you choose' : 'past 7 days'}</p>
       <h2 className="ci-title">{current.title}</h2>
+      {step === 0 && dateRange && (
+        <div className="ci-question ci-date">
+          <label className="ci-label" htmlFor="ci-entry-date">{formType === 'baseline_wellbeing' ? 'Date of your baseline' : 'Date of this check-in'}</label>
+          <p className="ci-help">{formType === 'baseline_wellbeing'
+            ? 'The day your starting point describes. Weekly check-ins follow from the week after.'
+            : 'Choose the day these answers are for. Today is filled in; pick an earlier date to add a week you missed. Each Monday-to-Sunday week has one check-in.'}</p>
+          <input id="ci-entry-date" className="wq-input" type="date" required min={dateRange.min} max={dateRange.max} value={entryDate} onChange={(event) => setEntryDate(event.target.value)} />
+        </div>
+      )}
       {current.intro && <p className="ci-intro">{current.intro}</p>}
       {current.items.map((item) => <Question key={item.key} item={item} value={answers[item.key]} onChange={(value) => setAnswer(item.key, value)} />)}
 

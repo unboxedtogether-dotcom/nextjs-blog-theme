@@ -14,6 +14,7 @@ import { scoreDisclaimer } from '../../utils/progress-checkin.mjs';
 import { buildTimeline, weekLabel } from '../../utils/progress-timeline.mjs';
 
 const seo = <SEO title="Weekly check-in | Unboxed Together" description="Your private weekly check-in." path="/members/check-in" />;
+const addDaysTo = (date, count) => new Date(Date.parse(`${date}T00:00:00Z`) + count * 86400000).toISOString().slice(0, 10);
 const longDate = (date) => new Date(`${date}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
 
 function Saved({ result }) {
@@ -54,24 +55,38 @@ function CheckIn({ initial }) {
     const baselineEntry = progress.entries.find((entry) => entry.rootId === progress.baselineRootId);
     const correctingWeek = correcting === 'week' && progress.state === 'done' && thisWeek;
     const correctingBaseline = correcting === 'baseline' && progress.canCorrectBaseline && baselineEntry;
+    const missed = progress.missedWeeks || [];
+    // ?missed=1 adds a check-in for an earlier week without one.
+    const addingMissed = router.query.missed && progress.state === 'done' && missed.length > 0 && !correctingWeek && !correctingBaseline;
     const formType = progress.state === 'needs_baseline' || correctingBaseline ? 'baseline_wellbeing' : 'weekly_checkin';
-    const draft = progress.drafts?.[formType];
-    const open = progress.state === 'needs_baseline' || progress.state === 'due' || correctingWeek || correctingBaseline;
+    const draft = addingMissed ? null : progress.drafts?.[formType];
+    const open = progress.state === 'needs_baseline' || progress.state === 'due' || correctingWeek || correctingBaseline || addingMissed;
+    const correctingEntry = correctingWeek ? thisWeek : correctingBaseline ? baselineEntry : null;
+    // Corrections can move the date within the original's own week only.
+    const dateRange = correctingEntry
+      ? { min: correctingEntry.weekStart, max: [addDaysTo(correctingEntry.weekStart, 6), progress.today].sort()[0], initial: correctingEntry.entryDate || correctingEntry.weekStart }
+      : progress.entryDateRange && {
+        ...progress.entryDateRange,
+        initial: formType === 'baseline_wellbeing' ? progress.suggestedBaselineDate || progress.today : addingMissed ? missed[0].start : progress.today,
+      };
     const usedPrefill = formType === 'baseline_wellbeing' && !draft && !correctingBaseline && Object.keys(progress.prefill || {}).length > 0;
 
     body = open ? (
       <section className="onboarding-card wq-card checkin-card">
-        <p className="wq-tagline">{correctingWeek || correctingBaseline ? 'Correcting your answers' : formType === 'baseline_wellbeing' ? 'Baseline · Week 0' : `Week ${progress.currentWeek.number} check-in`}</p>
+        <p className="wq-tagline">{correctingWeek || correctingBaseline ? 'Correcting your answers' : formType === 'baseline_wellbeing' ? 'Baseline · Week 0' : addingMissed ? 'Adding a missed week' : `Week ${progress.currentWeek.number} check-in`}</p>
+        {addingMissed && <p className="wq-paragraph">Weeks without a check-in: {missed.map((week) => `Week ${week.number} (from ${longDate(week.start)})`).join(', ')}. Choose a date inside the week you want to add.</p>}
+        {formType === 'baseline_wellbeing' && progress.suggestedBaselineDate && !correctingBaseline && <p className="ci-prefill">The date is taken from the baseline date on your welcome questionnaire. You can change it.</p>}
         {formType === 'baseline_wellbeing' && !correctingBaseline && <p className="wq-paragraph">Your baseline is your starting point. It uses the same questions as every weekly check-in, so your scores can be compared fairly. It will not change when you complete later check-ins.</p>}
         {usedPrefill && <p className="ci-prefill">Some answers are filled in from page 3 of your welcome questionnaire. Please check they still describe the past 7 days.</p>}
         {draft && <p className="ci-prefill">We have restored the answers you saved earlier.</p>}
         <CheckInForm
-          key={`${formType}-${correcting || 'new'}`}
+          key={`${formType}-${correcting || (addingMissed ? 'missed' : 'new')}`}
           formType={formType}
           initialAnswers={correctingWeek ? thisWeek.answers : correctingBaseline ? baselineEntry.answers : draft?.answers || progress.prefill}
           draftSavedAt={draft?.updatedAt}
           revisionOf={correctingWeek ? thisWeek.rootId : correctingBaseline ? baselineEntry.rootId : null}
           revisionReasons={progress.revisionReasons}
+          dateRange={dateRange}
           onCancel={correctingWeek || correctingBaseline ? () => router.push('/members/progress') : undefined}
           onSaved={(saved) => { setResult(saved); window.scrollTo({ top: 0 }); }}
         />
@@ -83,11 +98,12 @@ function CheckIn({ initial }) {
         <p className="wq-paragraph">
           {progress.state === 'waiting'
             ? `Your first weekly check-in opens on ${longDate(progress.nextCheckInOpens)}.`
-            : 'You have already completed this week’s check-in. Each week has one check-in so your scores stay comparable. You can correct this week’s answers until Sunday.'}
+            : 'You have already completed this week’s check-in. Each week has one check-in so your scores stay comparable. You can correct a check-in within 7 days of saving it.'}
         </p>
         <div className="card-actions">
           <Link className="member-button" href="/members/progress">See my progress</Link>
           {progress.state === 'done' && <Link className="member-button secondary" href="/members/check-in?correct=week">Correct this week’s answers</Link>}
+          {progress.state === 'done' && progress.missedWeeks?.length > 0 && <Link className="member-button secondary" href="/members/check-in?missed=1">Add a missed week</Link>}
           {progress.state === 'waiting' && progress.canCorrectBaseline && <Link className="member-button secondary" href="/members/check-in?correct=baseline">Correct my baseline answers</Link>}
         </div>
       </section>

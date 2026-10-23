@@ -78,7 +78,8 @@ export function buildTimeline(entries = [], currentWeekNumber = null) {
       change: latest && previous ? latest.overall - previous.overall : null,
       baselineScore,
       changeFromBaseline: latest && baselineScore !== null ? latest.overall - baselineScore : null,
-      lastCheckInAt: latest?.submittedAt ?? null,
+      // The date the member chose for the check-in, falling back to when it was saved.
+      lastCheckInAt: latest ? (latest.entryDate ? `${latest.entryDate}T12:00:00Z` : latest.submittedAt) : null,
       completedCount: checkIns.length,
       missedCount: weeks.filter((week) => week.status === 'missed').length,
       incompleteCount: weeks.filter((week) => week.status === 'incomplete').length,

@@ -14,6 +14,9 @@ async function searchMembers(query, term) {
       b.baseline_date::text AS baseline_date, b.reporting_week_start::text AS baseline_week_start,
       to_char(date_trunc('week', timezone('Europe/London', NOW())), 'YYYY-MM-DD') AS current_week_start,
       (SELECT MAX(s.submitted_at) FROM member_form_submissions s WHERE s.user_id = p.id AND s.form_type = 'weekly_checkin') AS last_checkin_at,
+      (SELECT MAX(s.entry_date)::text FROM member_form_submissions s WHERE s.user_id = p.id AND s.form_type = 'weekly_checkin') AS last_checkin_date,
+      w.completed_at AS welcome_completed_at, h.section_3_saved_at AS welcome_starting_point_saved_at,
+      CASE WHEN h.answers->>'baselineDate' ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN h.answers->>'baselineDate' END AS welcome_baseline_date,
       (SELECT COUNT(*) FROM member_form_submissions s WHERE s.user_id = p.id AND s.form_type = 'weekly_checkin' AND s.revision_of IS NULL)::int AS checkins,
       (SELECT COUNT(*) FROM member_form_submissions s WHERE s.user_id = p.id)::int AS submissions,
       EXISTS (SELECT 1 FROM member_form_submissions s WHERE s.user_id = p.id AND s.form_type = 'weekly_checkin'
@@ -22,9 +25,10 @@ async function searchMembers(query, term) {
         ORDER BY ws.reporting_week_number DESC, ws.calculated_at DESC LIMIT 1) AS latest_score
     FROM profiles p
     LEFT JOIN member_welcome_details w ON w.user_id = p.id
+    LEFT JOIN member_health_information h ON h.user_id = p.id
     LEFT JOIN member_baselines b ON b.user_id = p.id
     WHERE $1 = '' OR p.display_name ILIKE $2 OR w.answers->>'email' ILIKE $2
-    ORDER BY last_checkin_at DESC NULLS LAST, p.display_name
+    ORDER BY GREATEST((SELECT MAX(s.submitted_at) FROM member_form_submissions s WHERE s.user_id = p.id), w.updated_at, h.updated_at, p.created_at) DESC NULLS LAST, p.display_name
     LIMIT 200
   `, [term, likePattern(term)]);
   return rows.map(({ baseline_week_start: baselineWeek, current_week_start: currentWeek, checked_in_this_week: thisWeek, ...row }) => {
@@ -54,6 +58,7 @@ async function loadMember(query, memberId) {
     consentHistory,
     baseline: state.baseline,
     currentWeek: state.currentWeek,
+    welcomeStartingPoint: state.welcomeStartingPoint,
     entries: state.entries,
     generalNotes: state.generalNotes,
     submissions,

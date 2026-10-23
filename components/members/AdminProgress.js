@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import BrandLoader from '../BrandLoader';
-import ProgressOverview from '../progress/ProgressOverview';
+import ProgressOverview, { formatDay } from '../progress/ProgressOverview';
+import WelcomeStartingPoint from '../progress/WelcomeStartingPoint';
 import { Change } from '../progress/ScoreChart';
 import SubmissionVersions, { submissionStatus } from './SubmissionView';
 import { scoreCategories, submissionTitle } from '../../utils/progress-checkin.mjs';
@@ -102,7 +103,8 @@ function MemberProgress({ id, onClose }) {
           <div><dt>Email</dt><dd>{profile.email || '—'}</dd></div>
           <div><dt>Membership</dt><dd>{profile.membership_status} since {formatDate(profile.membership_started_at)}</dd></div>
           <div><dt>Progress tracking consent</dt><dd>{consent.given ? `Given ${formatDate(consent.givenAt)}` : 'Not given'}</dd></div>
-          <div><dt>Baseline</dt><dd>{baseline ? formatDate(baseline.date) : 'Not completed'}</dd></div>
+          <div><dt>Baseline</dt><dd>{baseline ? formatDay(baseline.date) : 'Not completed'}</dd></div>
+          <div><dt>Welcome questionnaire baseline date</dt><dd>{state.member.welcomeStartingPoint?.date ? formatDay(state.member.welcomeStartingPoint.date) : '—'}</dd></div>
           <div><dt>Missed weeks</dt><dd>{missed.length ? missed.map(weekLabel).join(', ') : 'None'}</dd></div>
           <div><dt>Incomplete check-ins</dt><dd>{incomplete.length ? incomplete.map(weekLabel).join(', ') : 'None'}</dd></div>
         </dl>
@@ -122,6 +124,9 @@ function MemberProgress({ id, onClose }) {
         </>
       )}
 
+      {!timeline.weeks.length && <section className="profile-panel"><h2>No progress check-ins yet</h2><p>This member has not completed the baseline assessment, so there are no weekly scores. Their welcome questionnaire starting point is shown below when they have filled it in.</p></section>}
+      <WelcomeStartingPoint point={state.member.welcomeStartingPoint} mode="admin" />
+
       <section className="profile-panel">
         <h2>General private notes</h2>
         {generalNotes.filter((note) => note.authorRole === 'admin').map((note) => <p key={note.id} className="note-item is-private">{note.body} <small>{formatDate(note.createdAt)}</small></p>)}
@@ -133,11 +138,11 @@ function MemberProgress({ id, onClose }) {
         {submissions.length ? (
           <div className="admin-table-wrap">
             <table className="admin-table">
-              <thead><tr><th>Form</th><th>Submitted</th><th>Status</th><th>Score</th><th><span className="sr-only">Actions</span></th></tr></thead>
+              <thead><tr><th>Form</th><th>Dated</th><th>Submitted</th><th>Status</th><th>Score</th><th><span className="sr-only">Actions</span></th></tr></thead>
               <tbody>
                 {submissions.map((row) => (
                   <tr key={row.id}>
-                    <td>{submissionTitle(row)}</td><td>{formatDate(row.submitted_at)}</td><td>{submissionStatus(row)}</td>
+                    <td>{submissionTitle(row)}</td><td>{row.entry_date ? formatDay(row.entry_date) : '—'}</td><td>{formatDate(row.submitted_at)}</td><td>{submissionStatus(row)}</td>
                     <td>{row.overall_score === null ? '—' : `${Math.round(row.overall_score)}/100`}</td>
                     <td><button className="text-button" type="button" onClick={() => openSubmission(row.id)}>Open</button></td>
                   </tr>
@@ -179,17 +184,18 @@ export default function AdminProgress() {
       {state.loading ? <BrandLoader label="Loading members…" /> : (
         <div className="admin-table-wrap">
           <table className="admin-table">
-            <thead><tr><th>Name</th><th>Email</th><th>Baseline</th><th>Check-ins</th><th>Missed</th><th>Latest score</th><th>Last check-in</th><th><span className="sr-only">Actions</span></th></tr></thead>
+            <thead><tr><th>Name</th><th>Email</th><th>Welcome form</th><th>Baseline</th><th>Check-ins</th><th>Missed</th><th>Latest score</th><th>Last check-in</th><th><span className="sr-only">Actions</span></th></tr></thead>
             <tbody>
               {state.members.map((member) => (
                 <tr key={member.id}>
                   <td>{member.display_name}</td>
                   <td>{member.email || '—'}</td>
-                  <td>{member.baseline_date ? formatDate(member.baseline_date) : 'Not started'}</td>
+                  <td>{member.welcome_completed_at ? <>Done {formatDate(member.welcome_completed_at)}{member.welcome_baseline_date && <><br /><small>Baseline date {formatDay(member.welcome_baseline_date)}</small></>}</> : 'Not started'}</td>
+                  <td>{member.baseline_date ? formatDay(member.baseline_date) : 'Not started'}</td>
                   <td>{member.checkins}</td>
                   <td>{member.missed ?? '—'}</td>
                   <td>{member.latest_score === null ? '—' : `${Math.round(member.latest_score)}/100`}</td>
-                  <td>{formatDate(member.last_checkin_at)}</td>
+                  <td>{member.last_checkin_date ? formatDay(member.last_checkin_date) : '—'}</td>
                   <td><button className="text-button" type="button" onClick={() => setSelected(member.id)}>Open</button></td>
                 </tr>
               ))}

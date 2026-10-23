@@ -6,6 +6,7 @@ import Layout from '../Layout';
 import SEO from '../SEO';
 import ProgressOverview from './ProgressOverview';
 import { ProgressConsentManager } from './ProgressConsent';
+import WelcomeStartingPoint from './WelcomeStartingPoint';
 
 export const progressSeo = <SEO title="My progress | Unboxed Together" description="Your private weekly progress." path="/members/progress" />;
 const longDate = (date) => new Date(`${date}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
@@ -21,10 +22,14 @@ export function CheckInPrompt({ progress }) {
     done: ['This week’s check-in is done', `Your next check-in opens on ${longDate(addDays(progress.currentWeek.start, 7))}.`, 'Correct this week’s answers', '/members/check-in?correct=week'],
   };
   const [title, text, action, href] = prompts[progress.state];
+  const missed = progress.state === 'done' ? progress.missedWeeks || [] : [];
   return (
     <section className={`checkin-prompt is-${progress.state}`} aria-live="polite">
       <div><h2>{title}</h2><p>{text}</p></div>
-      {action && <Link className={`member-button${['done', 'waiting'].includes(progress.state) ? ' secondary' : ''}`} href={href}>{action}</Link>}
+      <div className="card-actions">
+        {missed.length > 0 && <Link className="member-button" href="/members/check-in?missed=1">Add a missed week ({missed.length})</Link>}
+        {action && <Link className={`member-button${['done', 'waiting'].includes(progress.state) ? ' secondary' : ''}`} href={href}>{action}</Link>}
+      </div>
     </section>
   );
 }
@@ -68,6 +73,7 @@ export default function ProgressPage({ initial, preview = false, notice = null }
         ) : (
           <section className="profile-panel"><h2>Nothing to show yet</h2><p>Your chart and weekly history appear here once you have completed your baseline assessment.</p></section>
         )}
+        <WelcomeStartingPoint point={progress.welcomeStartingPoint} />
         <div className="progress-footer">
           {!preview && hasRecords && <a className="member-button secondary" href="/api/forms/export?format=pdf">Download my progress report (PDF)</a>}
           {!preview && <ProgressConsentManager consent={progress.consent} onWithdrawn={setProgress} />}
