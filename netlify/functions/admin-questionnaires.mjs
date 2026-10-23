@@ -1,5 +1,5 @@
 import { getUser } from '@netlify/identity';
-import { withMemberAccess } from './_shared/member-access.mjs';
+import { authoriseAdmin, notAllowlistedMessage, withMemberAccess } from './_shared/member-access.mjs';
 
 // Read-only questionnaire access for Identity users with the `admin` role.
 // Every request is written to the admin access log.
@@ -8,11 +8,12 @@ export default async function adminQuestionnaires(request) {
   const user = await getUser();
   if (!user) return Response.json({ error: 'Please log in to continue.' }, { status: 401 });
   if (!(user.roles || []).includes('admin')) return Response.json({ error: 'You do not have access to member questionnaires.' }, { status: 403 });
+  if (!(await authoriseAdmin(user))) return Response.json({ error: notAllowlistedMessage }, { status: 403 });
 
   const memberId = new URL(request.url).searchParams.get('member');
 
   const result = await withMemberAccess(user.id, async (query) => {
-    await query('INSERT INTO questionnaire_admin_access_log (admin_user_id, member_user_id) VALUES ($1, $2)', [user.id, memberId]);
+    await query('INSERT INTO questionnaire_admin_access_log (admin_user_id, member_user_id, action) VALUES ($1, $2, $3)', [user.id, memberId, memberId ? 'view_questionnaire' : 'list_questionnaires']);
 
     if (!memberId) {
       const members = await query(`

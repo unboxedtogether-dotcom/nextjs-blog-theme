@@ -6,34 +6,11 @@ import { useMemberData } from '../../utils/use-member-data';
 import { questionnaireSections } from '../../utils/welcome-questionnaire.mjs';
 import BrandLoader from '../../components/BrandLoader';
 import AdminReviews from '../../components/members/AdminReviews';
+import AdminProgress from '../../components/members/AdminProgress';
+import AdminAccess from '../../components/members/AdminAccess';
+import { SectionAnswers } from '../../components/members/SubmissionView';
 
 const formatDate = (value) => (value ? new Date(value).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) : '—');
-
-function displayValue(field, value, answers) {
-  if (value === null || value === undefined || value === '' || (Array.isArray(value) && value.length === 0)) return null;
-  if (field.type === 'checkbox') return value ? 'Yes' : 'No';
-  if (Array.isArray(value)) {
-    const other = field.otherKey && answers[field.otherKey] ? ` (${answers[field.otherKey]})` : '';
-    return value.join(', ') + other;
-  }
-  return [field.prefix, value, field.suffix].filter(Boolean).join(' ');
-}
-
-function SectionAnswers({ section, answers }) {
-  const rows = section.blocks.filter((block) => block.kind === 'question').flatMap((question) => question.fields
-    .filter((field) => !field.profileField)
-    .map((field) => ({ key: field.key, question, label: field.label || '', value: displayValue(field, answers[field.key], answers) })));
-  return (
-    <dl className="admin-answers">
-      {rows.map((row) => (
-        <div key={row.key}>
-          <dt>{row.question.number ? `${row.question.number}. ` : ''}{row.question.label || ''}{row.label ? ` — ${row.label}` : ''}</dt>
-          <dd>{row.value ?? <span className="admin-empty">Not answered</span>}</dd>
-        </div>
-      ))}
-    </dl>
-  );
-}
 
 function MemberDetail({ id, onClose }) {
   const [state, setState] = useState({ loading: true, error: '', member: null });
@@ -116,19 +93,23 @@ function MemberMessages() {
 export default function AdminQuestionnaires() {
   const { data, loading, error } = useMemberData('/api/admin/questionnaires');
   const [selected, setSelected] = useState('');
-  const [tab, setTab] = useState('questionnaires');
+  const [tab, setTab] = useState('progress');
 
   return (
     <Layout>
       <SEO title="Team area | Unboxed Together" description="Restricted member questionnaire access." path="/members/admin" />
       <Head><meta name="robots" content="noindex, nofollow" /></Head>
       <div className="member-page profile-page">
-        <header className="member-hero compact"><p className="member-kicker">Team only</p><h1>Team area</h1><p>Confidential. Questionnaires and messages are read-only and every view is recorded. Do not copy answers into email.</p></header>
+        <header className="member-hero compact"><p className="member-kicker">Team only</p><h1>Team area</h1><p>Confidential. Member records are read-only and every view, note and export is recorded. Do not copy answers into email.</p></header>
         <nav className="dashboard-nav" aria-label="Team area sections">
+          <button type="button" className={tab === 'progress' ? 'is-active' : ''} onClick={() => setTab('progress')}>Member progress</button>
           <button type="button" className={tab === 'questionnaires' ? 'is-active' : ''} onClick={() => setTab('questionnaires')}>Questionnaires</button>
           <button type="button" className={tab === 'messages' ? 'is-active' : ''} onClick={() => setTab('messages')}>Messages</button>
           <button type="button" className={tab === 'reviews' ? 'is-active' : ''} onClick={() => setTab('reviews')}>Book reviews</button>
+          <button type="button" className={tab === 'access' ? 'is-active' : ''} onClick={() => setTab('access')}>Admin access</button>
         </nav>
+        {tab === 'progress' && !error && <AdminProgress />}
+        {tab === 'access' && !error && <AdminAccess />}
         {tab === 'messages' && !error && <MemberMessages />}
         {tab === 'reviews' && !error && <AdminReviews />}
         {error && <p className="onboarding-error" role="alert">{error}</p>}

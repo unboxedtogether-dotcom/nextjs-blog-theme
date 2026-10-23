@@ -2,6 +2,8 @@ import { getUser, verifyRequestOrigin } from '@netlify/identity';
 import { bioLimit } from '../../utils/member-options.mjs';
 import { cleanSectionAnswers } from '../../utils/welcome-questionnaire.mjs';
 import { ensureProfile, questionnaireStatus, recordConsent, withMemberAccess } from './_shared/member-access.mjs';
+import { appendWelcomeHistory, loadProgressState } from './_shared/progress-store.mjs';
+import { buildTimeline } from '../../utils/progress-timeline.mjs';
 
 async function loadMember(query, user) {
   const [profile] = await query(`
@@ -19,6 +21,19 @@ async function loadMember(query, user) {
     // edited in place so there is only one copy of each.
     about: { interests: answers.enjoys || '', reasons: answers.reasons || [], town: answers.town || '', phone: answers.phone || '' },
     questionnaire: await questionnaireStatus(query, user.id),
+    progress: await progressSummary(query, user.id),
+  };
+}
+
+// Headline figures for the dashboard card; the full history loads on /members/progress.
+async function progressSummary(query, userId) {
+  const state = await loadProgressState(query, userId);
+  return {
+    state: state.state,
+    consentGiven: state.consent.given,
+    nextCheckInOpens: state.nextCheckInOpens,
+    hasDraft: Boolean(state.drafts.weekly_checkin || state.drafts.baseline_wellbeing),
+    summary: buildTimeline(state.entries, state.currentWeek.number).summary,
   };
 }
 
@@ -41,6 +56,7 @@ async function saveProfile(query, user, input) {
   if (error) return { status: 422, error };
 
   await query('UPDATE member_welcome_details SET answers = $2::jsonb, updated_at = NOW() WHERE user_id = $1', [user.id, JSON.stringify(values)]);
+  await appendWelcomeHistory(query, user.id, 1, values, input.idempotencyKey);
   await query('UPDATE profiles SET display_name = $2, bio = $3, updated_at = NOW() WHERE id = $1', [user.id, displayName, bio]);
   return { status: 200 };
 }

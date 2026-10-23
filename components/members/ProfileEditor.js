@@ -106,7 +106,7 @@ export default function ProfileEditor({ profile, about, onSaved, onCancel }) {
     if (!form.displayName.trim()) return setStatus({ busy: false, error: 'Please enter your name.', success: '' });
     setStatus({ busy: true, error: '', success: '' });
     try {
-      await readJson(await fetch('/api/member', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ profile: form }) }));
+      await readJson(await fetch('/api/member', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ profile: { ...form, idempotencyKey: crypto.randomUUID() } }) }));
       if (form.displayName.trim() !== profile.display_name) await updateUser({ data: { full_name: form.displayName.trim() } }).catch(() => {});
       updateMember({ name: form.displayName.trim() });
       setStatus({ busy: false, error: '', success: 'Your profile has been saved.' });

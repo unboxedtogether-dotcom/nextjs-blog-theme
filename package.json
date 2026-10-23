@@ -19,7 +19,8 @@
     "build": "next build",
     "start": "next start",
     "export": "next build && next export",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "node --test tests/*.test.mjs"
   },
   "dependencies": {
     "@mapbox/rehype-prism": "^0.9.0",
@@ -32,6 +33,7 @@
     "next": "^16.0.8",
     "next-mdx-remote": "^5.0.0",
     "next-remote-watch": "2.0.0",
+    "pdf-lib": "^1.17.1",
     "prismjs": "^1.29.0",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",

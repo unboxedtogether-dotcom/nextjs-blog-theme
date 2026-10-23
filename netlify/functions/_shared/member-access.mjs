@@ -55,3 +55,29 @@ export async function questionnaireStatus(query, userId) {
     },
   };
 }
+
+export const notAllowlistedMessage = 'Your account has the Identity admin role but is not on the database admin allowlist, so member records stay locked. Ask an authorised admin to add your email in Team area → Admin access.';
+
+// Admin access needs the Identity `admin` role AND a database allowlist entry.
+// An allowlist entry added by email is bound to the Identity user id the first
+// time an Identity admin with that email signs in; after that only the id counts.
+export async function authoriseAdmin(user) {
+  if (!user || !(user.roles || []).includes('admin')) return false;
+  const email = (user.email || '').trim().toLowerCase();
+  if (email) {
+    await db.sql`
+      UPDATE member_admins SET user_id = ${user.id}, bound_at = NOW()
+      WHERE email = ${email} AND user_id IS NULL
+        AND NOT EXISTS (SELECT 1 FROM member_admins WHERE user_id = ${user.id})
+    `;
+  }
+  const rows = await db.sql`SELECT 1 FROM member_admins WHERE user_id = ${user.id}`;
+  return rows.length > 0;
+}
+
+// Must run inside withMemberAccess(..., 'admin'); RLS only accepts the
+// signed-in, allowlisted admin's own id.
+export const logAdminAccess = (query, adminId, memberId, action, resourceType = null, resourceId = null, detail = null) => query(
+  'INSERT INTO questionnaire_admin_access_log (admin_user_id, member_user_id, action, resource_type, resource_id, detail) VALUES ($1, $2, $3, $4, $5, $6)',
+  [adminId, memberId, action, resourceType, resourceId, detail],
+);
