@@ -25,6 +25,8 @@ export default async function memberAvatar(request) {
       headers: {
         'Content-Type': imageType(new Uint8Array(data)) || 'application/octet-stream',
         'Cache-Control': 'private, max-age=86400',
+        // A different signed-in account on the same browser never reuses this copy.
+        Vary: 'Cookie',
         'X-Content-Type-Options': 'nosniff',
         'Content-Security-Policy': "default-src 'none'",
       },

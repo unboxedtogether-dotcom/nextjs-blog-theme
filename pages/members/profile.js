@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { logout } from '@netlify/identity';
+import { signOutCompletely } from '../../utils/sign-out';
 import Layout from '../../components/Layout';
 import SEO from '../../components/SEO';
 import FormMessage from '../../components/auth/FormMessage';
@@ -62,7 +62,7 @@ function SettingsContent({ initial, email }) {
     setHealthConsentAt(null); setAnswerAction('');
     return setStatus({ area: 'privacy', loading: false, error: '', success: 'Your consent has been withdrawn and your answers on pages 2 to 4 have been deleted.' });
   };
-  const signOut = async () => { await logout(); window.location.href = '/'; };
+  const signOut = () => signOutCompletely();
   const deleteAccount = async () => {
     setStatus({ area: 'delete', loading: true, error: '', success: '' });
     const response = await fetch('/api/account', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ confirmation }) });

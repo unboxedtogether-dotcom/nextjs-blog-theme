@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { logout } from '@netlify/identity';
+import { signOutCompletely } from '../utils/sign-out';
 import { useAuth } from './auth/AuthProvider';
 import BrandLogo from './BrandLogo';
 import MemberAvatar from './members/MemberAvatar';
@@ -55,8 +55,7 @@ export default function Navigation() {
 
   const signOut = async () => {
     setIsOpen(false);
-    await logout();
-    window.location.href = '/';
+    await signOutCompletely();
   };
   const current = (href) => (router.pathname === href ? 'page' : undefined);
 
