@@ -7,11 +7,13 @@ const actionLabels = {
   list_messages: 'Listed messages', mark_message_read: 'Marked message read', list_member_progress: 'Listed member progress',
   search_member_progress: 'Searched members', view_member_progress: 'Viewed member progress', view_submission: 'Opened a submission',
   add_private_note: 'Added a private note', export_member_report: 'Exported a progress report', view_access_log: 'Viewed this log',
-  allowlist_add: 'Added an admin', allowlist_remove: 'Removed an admin',
+  allowlist_add: 'Added an admin', allowlist_remove: 'Removed an admin', allowlist_role: 'Changed an admin role',
+  list_member_types: 'Listed member types', set_member_type: 'Changed a member type',
 };
+const roleLabels = { admin: 'Admin', owner: 'Owner' };
 
-const send = async (method, email) => {
-  const response = await fetch('/api/admin/access', { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
+const send = async (method, email, role) => {
+  const response = await fetch('/api/admin/access', { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, role }) });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.error || 'That change could not be saved.');
   return data.entries;
@@ -19,7 +21,7 @@ const send = async (method, email) => {
 
 // Database admin allowlist and the record of admin access to member data.
 export default function AdminAccess() {
-  const [state, setState] = useState({ loading: true, error: '', entries: [], log: [] });
+  const [state, setState] = useState({ loading: true, error: '', entries: [], log: [], role: null });
   const [email, setEmail] = useState('');
   const [notice, setNotice] = useState('');
 
@@ -28,15 +30,15 @@ export default function AdminAccess() {
       .then(async (response) => {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Admin access could not be loaded.');
-        setState({ loading: false, error: '', entries: data.entries, log: data.log });
+        setState({ loading: false, error: '', entries: data.entries, log: data.log, role: data.role });
       })
       .catch((error) => setState({ loading: false, error: error.message, entries: [], log: [] }));
   }, []);
 
-  const change = async (method, value) => {
+  const change = async (method, value, role) => {
     setNotice('');
     try {
-      const entries = await send(method, value);
+      const entries = await send(method, value, role);
       setState((current) => ({ ...current, entries }));
       if (method === 'POST') setEmail('');
     } catch (error) {
@@ -51,16 +53,24 @@ export default function AdminAccess() {
       <section className="profile-panel">
         <h2>Database admin allowlist</h2>
         <p>Admin access to member records needs both the Identity <strong>admin</strong> role and an entry here. An email is linked to its Identity account the first time that admin opens the team area; after that, only the linked account counts.</p>
+        <p>Each entry is an <strong>Admin</strong> or an <strong>Owner</strong>. Both have the same team area access; only owners can change these roles or remove an owner.</p>
         <div className="admin-table-wrap">
           <table className="admin-table">
-            <thead><tr><th>Email</th><th>Status</th><th>Added</th><th><span className="sr-only">Actions</span></th></tr></thead>
+            <thead><tr><th>Email</th><th>Member type</th><th>Status</th><th>Added</th><th><span className="sr-only">Actions</span></th></tr></thead>
             <tbody>
               {state.entries.map((entry) => (
                 <tr key={entry.email}>
                   <td>{entry.email}{entry.isYou ? ' (you)' : ''}</td>
+                  <td>
+                    {state.role === 'owner' && !entry.isYou ? (
+                      <select className="wq-input" aria-label={`Member type for ${entry.email}`} value={entry.role} onChange={(event) => change('PATCH', entry.email, event.target.value)}>
+                        {Object.entries(roleLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                      </select>
+                    ) : roleLabels[entry.role]}
+                  </td>
                   <td>{entry.bound ? `Linked ${formatDate(entry.bound_at)}` : 'Waiting for first sign-in'}</td>
                   <td>{formatDate(entry.added_at)}</td>
-                  <td>{!entry.isYou && <button className="text-button danger" type="button" onClick={() => { if (window.confirm(`Remove ${entry.email} from the admin allowlist?`)) change('DELETE', entry.email); }}>Remove</button>}</td>
+                  <td>{!entry.isYou && (entry.role !== 'owner' || state.role === 'owner') && <button className="text-button danger" type="button" onClick={() => { if (window.confirm(`Remove ${entry.email} from the admin allowlist?`)) change('DELETE', entry.email); }}>Remove</button>}</td>
                 </tr>
               ))}
             </tbody>

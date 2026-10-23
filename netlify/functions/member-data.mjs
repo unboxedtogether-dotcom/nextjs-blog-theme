@@ -1,14 +1,15 @@
 import { getUser, verifyRequestOrigin } from '@netlify/identity';
 import { bioLimit } from '../../utils/member-options.mjs';
 import { cleanSectionAnswers } from '../../utils/welcome-questionnaire.mjs';
-import { ensureProfile, questionnaireStatus, recordConsent, withMemberAccess } from './_shared/member-access.mjs';
+import { authoriseAdmin, ensureProfile, questionnaireStatus, recordConsent, withMemberAccess } from './_shared/member-access.mjs';
+import { resolveMemberType } from '../../utils/member-types.mjs';
 import { appendWelcomeHistory, loadProgressState } from './_shared/progress-store.mjs';
 import { buildTimeline } from '../../utils/progress-timeline.mjs';
 
 async function loadMember(query, user) {
   const [profile] = await query(`
     SELECT p.display_name, p.onboarding_completed, p.marketing_consent, p.marketing_consented_at, p.bio,
-      p.avatar_updated_at, p.membership_tier, t.name AS membership_tier_name, p.membership_status,
+      p.avatar_updated_at, p.membership_tier, t.name AS membership_tier_name, p.is_moderator, p.membership_status,
       p.membership_started_at, p.created_at
     FROM profiles p JOIN membership_tiers t ON t.id = p.membership_tier
     WHERE p.id = $1
@@ -89,7 +90,9 @@ export default async function memberData(request) {
       return Response.json({ displayName: profile?.display_name || '', avatarUpdatedAt: profile?.avatar_updated_at || null, isAdmin: (user.roles || []).includes('admin') }, { headers: { 'Cache-Control': 'no-store' } });
     }
     const result = await withMemberAccess(user.id, (query) => loadMember(query, user));
-    return Response.json({ ...result, isAdmin: (user.roles || []).includes('admin') }, { headers: { 'Cache-Control': 'no-store' } });
+    const adminRole = await authoriseAdmin(user);
+    const memberType = resolveMemberType({ membershipTier: result.profile?.membership_tier, isModerator: result.profile?.is_moderator, adminRole });
+    return Response.json({ ...result, memberType, isAdmin: (user.roles || []).includes('admin') }, { headers: { 'Cache-Control': 'no-store' } });
   }
 
   if (request.method !== 'PUT') return Response.json({ error: 'Method not allowed.' }, { status: 405 });

@@ -10,6 +10,7 @@ import SubscriptionCard from './SubscriptionCard';
 import ContactForm from './ContactForm';
 import CommunityComingSoon from './CommunityComingSoon';
 import { BrandImage } from '../BrandLogo';
+import { memberTypes } from '../../utils/member-types.mjs';
 
 const sectionLinks = [['#my-profile', 'My profile'], ['#my-welcome-form', 'Welcome form'], ['#my-progress', 'Progress'], ['#my-community', 'Community'], ['#my-subscription', 'Subscription'], ['#contact', 'Contact us']];
 
@@ -31,7 +32,7 @@ export default function Dashboard({ initial, email, seo, notice = null }) {
   const [about, setAbout] = useState(initial.about);
   const [avatarVersion, setAvatarVersion] = useState(initial.profile.avatar_updated_at);
   const [editing, setEditing] = useState(false);
-  const plan = (profile.membership_tier_name || 'Free Member').toUpperCase();
+  const memberType = memberTypes[initial.memberType] ? initial.memberType : 'free';
 
   return (
     <Layout>
@@ -44,7 +45,7 @@ export default function Dashboard({ initial, email, seo, notice = null }) {
           <div>
             <p className="member-kicker">Your member space</p>
             <h1>Welcome, {profile.display_name}.</h1>
-            <p className="hero-badges"><span className="plan-badge on-dark">{plan}</span><span>Membership active</span></p>
+            <p className="hero-badges"><span className={`plan-badge on-dark member-type-badge is-${memberType}`}>{memberTypes[memberType].toUpperCase()}</span><span>Membership active</span></p>
             {initial.isAdmin && <p><Link className="member-button" href="/members/admin">Open admin / team area →</Link></p>}
           </div>
         </header>

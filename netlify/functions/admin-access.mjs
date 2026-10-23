@@ -6,7 +6,7 @@ const db = getDatabase();
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 async function listEntries(userId) {
-  const rows = await db.sql`SELECT email, user_id, added_by, added_at, bound_at FROM member_admins ORDER BY added_at, email`;
+  const rows = await db.sql`SELECT email, user_id, role, added_by, added_at, bound_at FROM member_admins ORDER BY added_at, email`;
   return rows.map(({ user_id: boundUserId, ...row }) => ({ ...row, bound: Boolean(boundUserId), isYou: boundUserId === userId }));
 }
 
@@ -16,7 +16,8 @@ async function listEntries(userId) {
 export default async function adminAccess(request) {
   const user = await getUser();
   if (!user) return Response.json({ error: 'Please log in to continue.' }, { status: 401 });
-  if (!(await authoriseAdmin(user))) return Response.json({ error: (user.roles || []).includes('admin') ? notAllowlistedMessage : 'You do not have access to this area.' }, { status: 403 });
+  const callerRole = await authoriseAdmin(user);
+  if (!callerRole) return Response.json({ error: (user.roles || []).includes('admin') ? notAllowlistedMessage : 'You do not have access to this area.' }, { status: 403 });
 
   if (request.method === 'GET') {
     const log = await withMemberAccess(user.id, async (query) => {
@@ -30,14 +31,26 @@ export default async function adminAccess(request) {
         ORDER BY l.accessed_at DESC LIMIT 200
       `);
     }, 'admin');
-    return Response.json({ entries: await listEntries(user.id), log }, { headers: { 'Cache-Control': 'no-store' } });
+    return Response.json({ entries: await listEntries(user.id), log, role: callerRole }, { headers: { 'Cache-Control': 'no-store' } });
   }
 
-  if (!['POST', 'DELETE'].includes(request.method)) return Response.json({ error: 'Method not allowed.' }, { status: 405 });
+  if (!['POST', 'PATCH', 'DELETE'].includes(request.method)) return Response.json({ error: 'Method not allowed.' }, { status: 405 });
   verifyRequestOrigin(request);
   const body = await request.json().catch(() => ({}));
   const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
   if (!emailPattern.test(email) || email.length > 254) return Response.json({ error: 'Please enter a valid email address.' }, { status: 422 });
+
+  if (request.method === 'PATCH') {
+    // Only owners can make someone an owner or change an owner back to admin.
+    if (callerRole !== 'owner') return Response.json({ error: 'Only owners can change admin and owner roles.' }, { status: 403 });
+    if (!['admin', 'owner'].includes(body.role)) return Response.json({ error: 'Please choose Admin or Owner.' }, { status: 422 });
+    const entry = (await listEntries(user.id)).find((item) => item.email === email);
+    if (!entry) return Response.json({ error: 'That email is not on the allowlist.' }, { status: 404 });
+    if (entry.isYou) return Response.json({ error: 'You cannot change your own role. Ask another owner.' }, { status: 409 });
+    await db.sql`UPDATE member_admins SET role = ${body.role} WHERE email = ${email}`;
+    await withMemberAccess(user.id, (query) => logAdminAccess(query, user.id, null, 'allowlist_role', 'member_admins', null, `${email} → ${body.role}`), 'admin');
+    return Response.json({ entries: await listEntries(user.id) });
+  }
 
   if (request.method === 'POST') {
     await db.sql`INSERT INTO member_admins (email, added_by) VALUES (${email}, ${user.id}) ON CONFLICT (email) DO NOTHING`;
@@ -46,6 +59,7 @@ export default async function adminAccess(request) {
     const entry = entries.find((item) => item.email === email);
     if (!entry) return Response.json({ error: 'That email is not on the allowlist.' }, { status: 404 });
     if (entry.isYou) return Response.json({ error: 'You cannot remove your own admin access. Ask another authorised admin.' }, { status: 409 });
+    if (entry.role === 'owner' && callerRole !== 'owner') return Response.json({ error: 'Only owners can remove an owner.' }, { status: 403 });
     await db.sql`DELETE FROM member_admins WHERE email = ${email}`;
   }
   await withMemberAccess(user.id, (query) => logAdminAccess(query, user.id, null, request.method === 'POST' ? 'allowlist_add' : 'allowlist_remove', 'member_admins', null, email), 'admin');

@@ -32,6 +32,7 @@ const sample = {
     sectionSavedAt: { 2: '2026-10-01T09:15:00Z', 3: null, 4: null },
   },
   progress: sampleProgressSummary,
+  memberType: 'free',
   isAdmin: false,
 };
 

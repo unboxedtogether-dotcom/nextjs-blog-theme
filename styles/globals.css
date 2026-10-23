@@ -2211,3 +2211,7 @@ section[id], [id="footer"] { scroll-margin-top: 6rem; }
   .ci-actions .member-button { flex: 1; min-width: 0; }
   .progress-tile > strong { font-size: 1.6rem; }
 }
+
+/* Member type badge under the dashboard welcome */
+.member-type-badge.is-moderator { color: var(--brand-black); background: var(--brand-orange); }
+.member-type-badge.is-admin, .member-type-badge.is-owner { background: var(--brand-black); }

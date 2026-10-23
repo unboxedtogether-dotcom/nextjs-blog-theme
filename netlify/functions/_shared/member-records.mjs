@@ -54,7 +54,7 @@ export async function loadSubmissionDetail(query, userId, id) {
 // Full personal data export (UK GDPR right of access and portability).
 export async function loadMemberExport(query, userId) {
   const [profile] = await query(`
-    SELECT display_name, bio, membership_tier, membership_status, membership_started_at, marketing_consent,
+    SELECT display_name, bio, membership_tier, is_moderator, membership_status, membership_started_at, marketing_consent,
       marketing_consented_at, marketing_withdrawn_at, created_at
     FROM profiles WHERE id = $1
   `, [userId]);
