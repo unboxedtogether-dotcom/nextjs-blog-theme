@@ -86,7 +86,7 @@ export default async function memberData(request) {
     // Lightweight lookup used by the site header on every page.
     if (new URL(request.url).searchParams.has('summary')) {
       const [profile] = await withMemberAccess(user.id, (query) => query('SELECT display_name, avatar_updated_at FROM profiles WHERE id = $1', [user.id]));
-      return Response.json({ displayName: profile?.display_name || '', avatarUpdatedAt: profile?.avatar_updated_at || null }, { headers: { 'Cache-Control': 'no-store' } });
+      return Response.json({ displayName: profile?.display_name || '', avatarUpdatedAt: profile?.avatar_updated_at || null, isAdmin: (user.roles || []).includes('admin') }, { headers: { 'Cache-Control': 'no-store' } });
     }
     const result = await withMemberAccess(user.id, (query) => loadMember(query, user));
     return Response.json({ ...result, isAdmin: (user.roles || []).includes('admin') }, { headers: { 'Cache-Control': 'no-store' } });

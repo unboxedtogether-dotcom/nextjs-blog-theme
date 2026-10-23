@@ -50,7 +50,7 @@ export function AuthProvider({ children }) {
       // An expired session cookie (e.g. after a long break) is refreshed once and the lookup retried.
       .then(async (response) => (response.status === 401 && await refreshSession().catch(() => null) ? load() : response))
       .then((response) => (response.ok ? response.json() : null))
-      .then((data) => { if (data) updateMember({ name: data.displayName, avatarVersion: data.avatarUpdatedAt }); })
+      .then((data) => { if (data) updateMember({ name: data.displayName, avatarVersion: data.avatarUpdatedAt, isAdmin: data.isAdmin === true }); })
       .catch(() => {});
     return () => controller.abort();
   }, [userId, updateMember]);

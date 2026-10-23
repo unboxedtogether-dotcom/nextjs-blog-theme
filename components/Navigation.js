@@ -112,6 +112,7 @@ export default function Navigation() {
                 <ul id="nav-member-menu" className={`nav-dropdown nav-dropdown--right${memberOpen ? ' is-open' : ''}`}>
                   <li><Link href="/members" aria-current={current('/members')} onClick={() => setIsOpen(false)}>My Dashboard</Link></li>
                   <li><Link href="/members/profile" aria-current={current('/members/profile')} onClick={() => setIsOpen(false)}>My Profile</Link></li>
+                  {member?.isAdmin && <li><Link href="/members/admin" aria-current={current('/members/admin')} onClick={() => setIsOpen(false)}>Admin / Team area</Link></li>}
                   <li><button type="button" onClick={signOut}>Log Out</button></li>
                 </ul>
               </div>
