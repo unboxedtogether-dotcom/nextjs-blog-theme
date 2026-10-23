@@ -55,7 +55,7 @@ export default function Footer() {
             <h2>Contact</h2>
             <ul>
               <li><a href={`mailto:${siteConfig.email}`}>{siteConfig.email}</a></li>
-              <li><span className="footer-label">Media enquiries</span><a href={`mailto:${siteConfig.mediaEmail}`}>{siteConfig.mediaEmail}</a></li>
+              {siteConfig.mediaEmail !== siteConfig.email && <li><span className="footer-label">Media enquiries</span><a href={`mailto:${siteConfig.mediaEmail}`}>{siteConfig.mediaEmail}</a></li>}
             </ul>
             <SocialLinks className="footer-socials" />
           </div>
