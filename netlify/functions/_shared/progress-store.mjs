@@ -1,4 +1,5 @@
 import { getDatabase } from '@netlify/database';
+import { checkInRows } from '../../../utils/welcome-questionnaire.mjs';
 import {
   CHECKIN_FORM_VERSION, PROGRESS_NOTICE_VERSION, SCORING_VERSION, cleanCheckinAnswers, scoreCheckin, scoredItems, welcomeFormTypes, welcomePrefill,
 } from '../../../utils/progress-checkin.mjs';
@@ -29,22 +30,29 @@ export async function currentWeek(query) {
 
 const weeksBetween = (from, to) => Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / (7 * 86400000));
 const addDays = (date, count) => new Date(Date.parse(`${date}T00:00:00Z`) + count * 86400000).toISOString().slice(0, 10);
+// Monday of the reporting week that contains a YYYY-MM-DD date.
+export const weekStartOf = (date) => addDays(date, -((new Date(`${date}T00:00:00Z`).getUTCDay() + 6) % 7));
+const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+export const isRealDate = (value) => typeof value === 'string' && datePattern.test(value) && new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) === value;
+// How far back a member can date a new baseline.
+export const BASELINE_DATE_LIMIT_DAYS = 365;
+const longDate = (date) => new Date(`${date}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 
 // Appends one submission. Retrying with the same idempotency key returns the
 // first record instead of creating another.
 export async function appendSubmission(query, {
   userId, formType, formVersion, answers, idempotencyKey, status = 'submitted', weekStart = null, weekNumber = null,
-  revisionOf = null, revisionNumber = 0, revisionReason = null,
+  revisionOf = null, revisionNumber = 0, revisionReason = null, entryDate = null,
 }) {
   const [existing] = await query('SELECT id, submitted_at FROM member_form_submissions WHERE user_id = $1 AND idempotency_key = $2', [userId, idempotencyKey]);
   if (existing) return { id: existing.id, submittedAt: existing.submitted_at, duplicate: true };
   const [row] = await query(`
     INSERT INTO member_form_submissions (user_id, form_type, form_version, reporting_week_start, reporting_week_number,
-      answers, status, revision_of, revision_number, revision_reason, idempotency_key)
-    VALUES ($1, $2, $3, $4::date, $5, $6::jsonb, $7, $8, $9, $10, $11)
+      answers, status, revision_of, revision_number, revision_reason, idempotency_key, entry_date)
+    VALUES ($1, $2, $3, $4::date, $5, $6::jsonb, $7, $8, $9, $10, $11, $12::date)
     ON CONFLICT (user_id, idempotency_key) DO NOTHING
     RETURNING id, submitted_at
-  `, [userId, formType, formVersion, weekStart, weekNumber, JSON.stringify(answers), status, revisionOf, revisionNumber, revisionReason, idempotencyKey]);
+  `, [userId, formType, formVersion, weekStart, weekNumber, JSON.stringify(answers), status, revisionOf, revisionNumber, revisionReason, idempotencyKey, entryDate]);
   if (!row) {
     const [first] = await query('SELECT id, submitted_at FROM member_form_submissions WHERE user_id = $1 AND idempotency_key = $2', [userId, idempotencyKey]);
     return { id: first.id, submittedAt: first.submitted_at, duplicate: true };
@@ -104,7 +112,7 @@ export async function giveProgressConsent(query, userId) {
 export async function loadProgressEntries(query, userId) {
   const rows = await query(`
     SELECT s.id, COALESCE(s.revision_of, s.id) AS root_id, s.form_type, s.reporting_week_number,
-      s.reporting_week_start::text AS week_start, s.answers, s.status, s.revision_number, s.revision_reason,
+      s.reporting_week_start::text AS week_start, s.entry_date::text AS entry_date, s.answers, s.status, s.revision_number, s.revision_reason,
       s.submitted_at, w.id AS score_id, w.overall_score, w.completeness, w.scoring_version
     FROM member_form_submissions s
     LEFT JOIN member_weekly_scores w ON w.submission_id = s.id AND w.scoring_version = $2
@@ -134,6 +142,7 @@ export async function loadProgressEntries(query, userId) {
       formType: row.form_type,
       weekNumber: row.reporting_week_number,
       weekStart: row.week_start,
+      entryDate: row.entry_date,
       submittedAt: row.submitted_at,
       originalSubmittedAt: existing?.originalSubmittedAt || row.submitted_at,
       revisionNumber: row.revision_number,
@@ -172,6 +181,17 @@ export async function loadProgressState(query, userId) {
   const currentWeekNumber = baseline ? weeksBetween(baseline.week_start, week.start) : null;
   const thisWeek = entries.find((entry) => entry.formType === 'weekly_checkin' && entry.weekStart === week.start) || null;
   const baselineEntry = entries.find((entry) => entry.formType === 'baseline_wellbeing') || null;
+  const [health] = await query('SELECT answers, section_3_saved_at FROM member_health_information WHERE user_id = $1', [userId]);
+  const welcomeAnswers = health?.answers || {};
+  const welcomeStartingPoint = welcomeStartingPointFrom(welcomeAnswers, health?.section_3_saved_at);
+
+  // Earlier weeks since the baseline without a check-in, newest first. A
+  // member can still add these, dated on a day inside that week.
+  const checkedWeeks = new Set(entries.filter((entry) => entry.formType === 'weekly_checkin').map((entry) => entry.weekNumber));
+  const missedWeeks = [];
+  for (let number = (currentWeekNumber ?? 0) - 1; number >= 1; number -= 1) {
+    if (!checkedWeeks.has(number)) missedWeeks.push({ number, start: addDays(baseline.week_start, number * 7) });
+  }
 
   let state = 'due';
   if (!baseline) state = consent.given ? 'needs_baseline' : 'needs_consent';
@@ -181,8 +201,7 @@ export async function loadProgressState(query, userId) {
 
   let prefill = {};
   if (!baseline) {
-    const [health] = await query('SELECT answers FROM member_health_information WHERE user_id = $1', [userId]);
-    const answers = health?.answers || {};
+    const answers = welcomeAnswers;
     prefill = Object.fromEntries(Object.entries(welcomePrefill)
       .filter(([from]) => answers[from] !== null && answers[from] !== undefined && answers[from] !== '')
       .map(([from, to]) => [to, answers[from]]));
@@ -196,6 +215,15 @@ export async function loadProgressState(query, userId) {
     currentWeek: { start: week.start, number: currentWeekNumber },
     baseline: baseline ? { date: baseline.baseline_date, weekStart: baseline.week_start } : null,
     nextCheckInOpens: baseline ? addDays(baseline.week_start, 7) : null,
+    today: week.today,
+    missedWeeks,
+    // Dates a member may choose for a new entry (YYYY-MM-DD, inclusive).
+    entryDateRange: baseline
+      ? { min: addDays(baseline.week_start, 7), max: week.today }
+      : { min: addDays(week.today, -BASELINE_DATE_LIMIT_DAYS), max: week.today },
+    suggestedBaselineDate: !baseline && welcomeStartingPoint?.date && welcomeStartingPoint.date <= week.today
+      && welcomeStartingPoint.date >= addDays(week.today, -BASELINE_DATE_LIMIT_DAYS) ? welcomeStartingPoint.date : null,
+    welcomeStartingPoint,
     thisWeekRootId: thisWeek?.rootId || null,
     canCorrectBaseline: Boolean(baselineEntry) && !entries.some((entry) => entry.formType === 'weekly_checkin'),
     baselineRootId: baselineEntry?.rootId || null,
@@ -206,6 +234,16 @@ export async function loadProgressState(query, userId) {
     entries,
     generalNotes,
   };
+}
+
+// Page 3 of the welcome questionnaire asks the same 1 to 5 questions as the
+// check-in, dated by the member's own "Baseline date". Shown alongside
+// progress (never scored or mixed into the weekly chart).
+function welcomeStartingPointFrom(answers, savedAt) {
+  const scores = checkInRows.map(({ key, label }) => ({ key, label, value: Number.isInteger(answers[key]) ? answers[key] : null }));
+  const date = isRealDate(answers.baselineDate) ? answers.baselineDate : null;
+  if (!date && !scores.some((row) => row.value !== null)) return null;
+  return { date, savedAt: savedAt || null, scores };
 }
 
 export async function saveDraft(query, userId, formType, input) {
@@ -237,7 +275,11 @@ export async function saveCheckin(query, userId, body) {
   const week = await currentWeek(query);
   const [baseline] = await query('SELECT reporting_week_start::text AS week_start FROM member_baselines WHERE user_id = $1', [userId]);
 
-  let weekStart = week.start;
+  if (body.entryDate !== undefined && body.entryDate !== null && body.entryDate !== '' && !isRealDate(body.entryDate)) throw new ProgressError(422, 'Please choose a valid date for this check-in.');
+  let entryDate = body.entryDate || week.today;
+  if (entryDate > week.today) throw new ProgressError(422, 'The date cannot be in the future.');
+
+  let weekStart = weekStartOf(entryDate);
   let weekNumber = 0;
   let revisionOf = null;
   let revisionNumber = 0;
@@ -245,11 +287,13 @@ export async function saveCheckin(query, userId, body) {
 
   if (body.revisionOf) {
     const [root] = isUuid(body.revisionOf) ? await query(`
-      SELECT id, reporting_week_start::text AS week_start, reporting_week_number FROM member_form_submissions
+      SELECT id, reporting_week_start::text AS week_start, reporting_week_number, entry_date::text AS entry_date,
+        submitted_at > NOW() - INTERVAL '7 days' AS recent
+      FROM member_form_submissions
       WHERE id = $1 AND user_id = $2 AND form_type = $3 AND revision_of IS NULL
     `, [body.revisionOf, userId, formType]) : [];
     if (!root) throw new ProgressError(404, 'That check-in could not be found.');
-    if (formType === 'weekly_checkin' && root.week_start !== week.start) throw new ProgressError(409, 'A check-in can only be corrected during its own reporting week. Earlier weeks stay exactly as submitted.');
+    if (formType === 'weekly_checkin' && !root.recent) throw new ProgressError(409, 'A check-in can only be corrected within 7 days of saving it. Earlier check-ins stay exactly as submitted.');
     if (formType === 'baseline_wellbeing') {
       const [later] = await query("SELECT 1 FROM member_form_submissions WHERE user_id = $1 AND form_type = 'weekly_checkin' LIMIT 1", [userId]);
       if (later) throw new ProgressError(409, 'Your baseline can no longer be corrected because weekly check-ins have been compared with it.');
@@ -260,19 +304,26 @@ export async function saveCheckin(query, userId, body) {
     revisionReason = body.revisionReason;
     weekStart = root.week_start;
     weekNumber = root.reporting_week_number;
+    // A correction keeps the original's week; its date can move within that week.
+    if (!body.entryDate || weekStartOf(entryDate) !== root.week_start) entryDate = root.entry_date || root.week_start;
   } else if (formType === 'baseline_wellbeing') {
     if (baseline) throw new ProgressError(409, 'Your baseline has already been saved. It stays as your Week 0 starting point.');
+    if (entryDate < addDays(week.today, -BASELINE_DATE_LIMIT_DAYS)) throw new ProgressError(422, 'Please choose a baseline date within the last 12 months.');
   } else {
     if (!baseline) throw new ProgressError(409, 'Please complete your baseline assessment first.');
-    weekNumber = weeksBetween(baseline.week_start, week.start);
-    if (weekNumber < 1) throw new ProgressError(409, 'Your first weekly check-in opens next Monday.');
-    const [already] = await query("SELECT id FROM member_form_submissions WHERE user_id = $1 AND form_type = 'weekly_checkin' AND reporting_week_start = $2::date AND revision_of IS NULL", [userId, week.start]);
-    if (already) throw new ProgressError(409, 'You have already completed this week’s check-in.', { submissionId: already.id });
+    weekNumber = weeksBetween(baseline.week_start, weekStart);
+    if (weekNumber < 1) throw new ProgressError(409, `Please choose a date after your baseline week. Weekly check-ins can be dated from ${longDate(addDays(baseline.week_start, 7))}.`);
+    const [already] = await query("SELECT id FROM member_form_submissions WHERE user_id = $1 AND form_type = 'weekly_checkin' AND reporting_week_start = $2::date AND revision_of IS NULL", [userId, weekStart]);
+    if (already) {
+      throw new ProgressError(409, weekStart === week.start
+        ? 'You have already completed this week’s check-in.'
+        : `You already have a check-in for the week starting ${longDate(weekStart)}. Each week has one check-in so scores stay comparable.`, { submissionId: already.id });
+    }
   }
 
   const saved = await appendSubmission(query, {
     userId, formType, formVersion: CHECKIN_FORM_VERSION, answers, idempotencyKey: body.idempotencyKey,
-    status: score.completeness === 'complete' ? 'submitted' : 'incomplete', weekStart, weekNumber, revisionOf, revisionNumber, revisionReason,
+    status: score.completeness === 'complete' ? 'submitted' : 'incomplete', weekStart, weekNumber, revisionOf, revisionNumber, revisionReason, entryDate,
   });
   if (saved.duplicate) return { submissionId: saved.id, duplicate: true };
 
@@ -287,7 +338,7 @@ export async function saveCheckin(query, userId, body) {
     `, [scoreRow.id, userId, category.key, category.weight, category.score, category.itemsAnswered, category.itemsRequired, category.status]);
   }
   if (formType === 'baseline_wellbeing' && !revisionOf) {
-    await query('INSERT INTO member_baselines (user_id, submission_id, baseline_date, reporting_week_start) VALUES ($1, $2, $3::date, $4::date)', [userId, saved.id, week.today, weekStart]);
+    await query('INSERT INTO member_baselines (user_id, submission_id, baseline_date, reporting_week_start) VALUES ($1, $2, $3::date, $4::date)', [userId, saved.id, entryDate, weekStart]);
   }
   await query('DELETE FROM member_form_drafts WHERE user_id = $1 AND form_type = $2', [userId, formType]);
   return { submissionId: saved.id, duplicate: false, score };

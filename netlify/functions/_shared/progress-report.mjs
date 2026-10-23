@@ -156,19 +156,19 @@ export async function buildProgressReport({ memberName, audience, timeline, subm
     w.chart(weeks);
     w.heading('Week by week');
     w.table([
-      { label: 'Week', share: 1.3 }, { label: 'Submitted', share: 1.6 }, { label: 'Overall', share: 1 }, { label: 'Change', share: 1 },
+      { label: 'Week', share: 1.3 }, { label: 'Dated', share: 1.6 }, { label: 'Overall', share: 1 }, { label: 'Change', share: 1 },
       ...scoreCategories.map((category) => ({ label: category.label, share: 1.1 })),
     ], weeks.slice().reverse().map((week) => (week.status === 'missed' || week.status === 'due' ? [
       weekLabel(week.weekNumber), week.status === 'due' ? 'Due this week' : 'No check-in', '-', '-', ...scoreCategories.map(() => '-'),
     ] : [
-      weekLabel(week.weekNumber), formatDate(week.submittedAt), week.status === 'complete' ? score(week.overall) : 'Incomplete',
+      weekLabel(week.weekNumber), formatDate(week.entryDate ? `${week.entryDate}T12:00:00Z` : week.submittedAt), week.status === 'complete' ? score(week.overall) : 'Incomplete',
       week.change === null ? '-' : formatChange(week.change),
       ...scoreCategories.map((category) => score(week.categories?.[category.key]?.score)),
     ])));
 
     for (const week of weeks.filter((item) => item.status === 'complete' || item.status === 'incomplete')) {
       w.heading(`${weekLabel(week.weekNumber)} - original answers`);
-      w.text(`Submitted ${formatDate(week.submittedAt)}${week.revisionNumber ? ` (correction ${week.revisionNumber}; original ${formatDate(week.originalSubmittedAt)})` : ''}. Scoring ${week.scoringVersion || '-'}.`, { size: 8.5, color: colors.muted });
+      w.text(`${week.entryDate ? `Dated ${formatDate(`${week.entryDate}T12:00:00Z`)}. ` : ''}Submitted ${formatDate(week.submittedAt)}${week.revisionNumber ? ` (correction ${week.revisionNumber}; original ${formatDate(week.originalSubmittedAt)})` : ''}. Scoring ${week.scoringVersion || '-'}.`, { size: 8.5, color: colors.muted });
       w.table([{ label: 'Question', share: 3 }, { label: 'Answer', share: 2 }], describeCheckinAnswers(week.answers).map((row) => [row.label, row.value ?? 'Not answered']));
       for (const note of week.notes || []) {
         w.text(`${note.authorRole === 'admin' ? 'Private team note' : 'Member note'} (${formatDate(note.createdAt)}): ${note.body}`, { size: 9 });

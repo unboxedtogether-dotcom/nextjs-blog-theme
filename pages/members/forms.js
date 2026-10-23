@@ -50,7 +50,7 @@ export default function MyForms() {
                 <li key={row.id}>
                   <button type="button" onClick={() => open(row.id)}>
                     <strong>{submissionTitle(row)}</strong>
-                    <span>{formatDate(row.submitted_at)}</span>
+                    <span>{row.entry_date ? `Dated ${new Date(`${row.entry_date}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })} · saved ` : ''}{formatDate(row.submitted_at)}</span>
                     <span className={`form-status is-${row.status}`}>{submissionStatus(row)}</span>
                     {row.overall_score !== null && <span className="form-score">{Math.round(row.overall_score)}/100</span>}
                   </button>

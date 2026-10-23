@@ -8,7 +8,7 @@ import { isUuid } from './progress-store.mjs';
 export async function loadSubmissionList(query, userId) {
   const submissions = await query(`
     SELECT s.id, COALESCE(s.revision_of, s.id) AS root_id, s.form_type, s.form_version, s.reporting_week_number,
-      s.reporting_week_start::text AS week_start, s.status, s.revision_number, s.revision_reason, s.source, s.submitted_at,
+      s.reporting_week_start::text AS week_start, s.entry_date::text AS entry_date, s.status, s.revision_number, s.revision_reason, s.source, s.submitted_at,
       w.overall_score, w.completeness
     FROM member_form_submissions s
     LEFT JOIN member_weekly_scores w ON w.submission_id = s.id AND w.scoring_version = $2
@@ -28,7 +28,7 @@ export async function loadSubmissionDetail(query, userId, id) {
   const [target] = await query('SELECT COALESCE(revision_of, id) AS root_id FROM member_form_submissions WHERE id = $1 AND user_id = $2', [id, userId]);
   if (!target) return null;
   const versions = await query(`
-    SELECT s.id, s.form_type, s.form_version, s.reporting_week_number, s.reporting_week_start::text AS week_start, s.answers,
+    SELECT s.id, s.form_type, s.form_version, s.reporting_week_number, s.reporting_week_start::text AS week_start, s.entry_date::text AS entry_date, s.answers,
       s.status, s.revision_number, s.revision_reason, s.source, s.submitted_at,
       w.id AS score_id, w.overall_score, w.completeness, w.scoring_version
     FROM member_form_submissions s
@@ -63,7 +63,7 @@ export async function loadMemberExport(query, userId) {
   const consentHistory = await query('SELECT consent_type, action, recorded_name, notice_version, recorded_at FROM member_consent_events WHERE user_id = $1 ORDER BY recorded_at', [userId]);
   const submissions = await query(`
     SELECT id, revision_of, form_type, form_version, reporting_week_number, reporting_week_start::text AS reporting_week_start,
-      answers, status, revision_number, revision_reason, source, submitted_at
+      entry_date::text AS entry_date, answers, status, revision_number, revision_reason, source, submitted_at
     FROM member_form_submissions WHERE user_id = $1 ORDER BY submitted_at
   `, [userId]);
   const scores = await query(`

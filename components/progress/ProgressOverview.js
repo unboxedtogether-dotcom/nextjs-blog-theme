@@ -5,6 +5,7 @@ import { buildTimeline, periods, weekLabel, weeksInPeriod } from '../../utils/pr
 
 const formatDate = (value) => (value ? new Date(value).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '');
 const formatDateTime = (value) => (value ? new Date(value).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) : '');
+export const formatDay = (date) => (date ? new Date(`${date}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }) : '');
 const weekRange = (start) => {
   if (!start) return '';
   const from = new Date(`${start}T12:00:00Z`);
@@ -129,8 +130,9 @@ function WeekCard({ week, open, onToggle, mode, onAddNote, onOpenSubmission }) {
       {open && (
         <div className="week-card__panel" id={`${headingId}-panel`} role="region" aria-labelledby={headingId}>
           <div className="week-card__meta">
-            <span>{weekRange(week.weekStart)}</span>
-            <span>Submitted {formatDateTime(week.submittedAt)}</span>
+            {week.entryDate && <span>Dated {formatDay(week.entryDate)}</span>}
+            <span>Week of {weekRange(week.weekStart)}</span>
+            <span>Saved {formatDateTime(week.submittedAt)}</span>
             {week.revisionNumber > 0 && <span>Corrected (correction {week.revisionNumber}). First submitted {formatDateTime(week.originalSubmittedAt)}</span>}
           </div>
           <div className="week-card__overall">

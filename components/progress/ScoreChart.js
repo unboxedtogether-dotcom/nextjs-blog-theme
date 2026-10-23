@@ -143,7 +143,7 @@ export default function ScoreChart({ weeks, baselineScore, onSelect, label = 'Ov
           {activePoint.week.status === 'complete' ? (
             <>
               <strong>{Math.round(activePoint.week.overall)}/100</strong>
-              <span>{weekLabel(activePoint.week.weekNumber)} · {formatDay(activePoint.week.submittedAt)}</span>
+              <span>{weekLabel(activePoint.week.weekNumber)} · {formatDay(activePoint.week.entryDate ? `${activePoint.week.entryDate}T12:00:00Z` : activePoint.week.submittedAt)}</span>
               {activePoint.week.change !== null && <Change delta={activePoint.week.change} comparedWeek={activePoint.week.previousWeekNumber} />}
             </>
           ) : (
