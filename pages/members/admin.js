@@ -8,6 +8,7 @@ import BrandLoader from '../../components/BrandLoader';
 import AdminReviews from '../../components/members/AdminReviews';
 import AdminProgress from '../../components/members/AdminProgress';
 import AdminAccess from '../../components/members/AdminAccess';
+import AdminMemberTypes from '../../components/members/AdminMemberTypes';
 import { SectionAnswers } from '../../components/members/SubmissionView';
 
 const formatDate = (value) => (value ? new Date(value).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) : '—');
@@ -106,9 +107,11 @@ export default function AdminQuestionnaires() {
           <button type="button" className={tab === 'questionnaires' ? 'is-active' : ''} onClick={() => setTab('questionnaires')}>Questionnaires</button>
           <button type="button" className={tab === 'messages' ? 'is-active' : ''} onClick={() => setTab('messages')}>Messages</button>
           <button type="button" className={tab === 'reviews' ? 'is-active' : ''} onClick={() => setTab('reviews')}>Book reviews</button>
+          <button type="button" className={tab === 'types' ? 'is-active' : ''} onClick={() => setTab('types')}>Member types</button>
           <button type="button" className={tab === 'access' ? 'is-active' : ''} onClick={() => setTab('access')}>Admin access</button>
         </nav>
         {tab === 'progress' && !error && <AdminProgress />}
+        {tab === 'types' && !error && <AdminMemberTypes />}
         {tab === 'access' && !error && <AdminAccess />}
         {tab === 'messages' && !error && <MemberMessages />}
         {tab === 'reviews' && !error && <AdminReviews />}

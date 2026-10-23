@@ -61,6 +61,7 @@ export const notAllowlistedMessage = 'Your account has the Identity admin role b
 // Admin access needs the Identity `admin` role AND a database allowlist entry.
 // An allowlist entry added by email is bound to the Identity user id the first
 // time an Identity admin with that email signs in; after that only the id counts.
+// Resolves to the allowlist role ('admin' or 'owner') when authorised, else false.
 export async function authoriseAdmin(user) {
   if (!user || !(user.roles || []).includes('admin')) return false;
   const email = (user.email || '').trim().toLowerCase();
@@ -71,8 +72,8 @@ export async function authoriseAdmin(user) {
         AND NOT EXISTS (SELECT 1 FROM member_admins WHERE user_id = ${user.id})
     `;
   }
-  const rows = await db.sql`SELECT 1 FROM member_admins WHERE user_id = ${user.id}`;
-  return rows.length > 0;
+  const [entry] = await db.sql`SELECT role FROM member_admins WHERE user_id = ${user.id}`;
+  return entry ? entry.role : false;
 }
 
 // Must run inside withMemberAccess(..., 'admin'); RLS only accepts the
