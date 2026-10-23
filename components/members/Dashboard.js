@@ -5,6 +5,7 @@ import MemberAvatar from './MemberAvatar';
 import ProfileEditor, { AvatarControls } from './ProfileEditor';
 import WelcomeFormCard from './WelcomeFormCard';
 import ProgressComingSoon from './ProgressComingSoon';
+import ProgressCard from './ProgressCard';
 import SubscriptionCard from './SubscriptionCard';
 import ContactForm from './ContactForm';
 import CommunityComingSoon from './CommunityComingSoon';
@@ -48,6 +49,8 @@ export default function Dashboard({ initial, email, seo, notice = null }) {
         </header>
         <nav className="dashboard-nav" aria-label="Dashboard sections">
           {sectionLinks.map(([href, label]) => <a key={href} href={href}>{label}</a>)}
+          <Link href="/members/progress">My progress</Link>
+          <Link href="/members/forms">My forms &amp; assessments</Link>
           <Link href="/members/profile">Account settings</Link>
         </nav>
 
@@ -65,8 +68,9 @@ export default function Dashboard({ initial, email, seo, notice = null }) {
 
           <div id="my-welcome-form"><WelcomeFormCard questionnaire={initial.questionnaire} /></div>
           <div id="my-subscription"><SubscriptionCard profile={profile} /></div>
-          <div id="my-progress"><ProgressComingSoon /></div>
+          <div id="my-progress"><ProgressCard progress={initial.progress} /></div>
           <div id="my-community"><CommunityComingSoon /></div>
+          <ProgressComingSoon />
 
           <Link className="dashboard-card dashboard-card-primary additive-shortcut" href="/additives">
             <span>Additive search</span>
@@ -87,8 +91,8 @@ export default function Dashboard({ initial, email, seo, notice = null }) {
           {initial.isAdmin && (
             <Link className="dashboard-card account-shortcut" href="/members/admin">
               <span>Team only</span>
-              <h2>Questionnaires, messages and book reviews</h2>
-              <p>Read-only access to members’ answers and private messages, plus book review moderation.</p>
+              <h2>Member progress, questionnaires and messages</h2>
+              <p>Read-only access to members’ progress, answers and private messages, plus book review moderation.</p>
               <strong>Open team area →</strong>
             </Link>
           )}

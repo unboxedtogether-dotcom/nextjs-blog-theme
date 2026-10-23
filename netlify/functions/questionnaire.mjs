@@ -2,9 +2,11 @@ import { getUser, verifyRequestOrigin } from '@netlify/identity';
 import { getDatabase } from '@netlify/database';
 import { cleanSectionAnswers } from '../../utils/welcome-questionnaire.mjs';
 import { ensureProfile, recordConsent, withMemberAccess } from './_shared/member-access.mjs';
+import { appendWelcomeHistory, eraseWelcomeHistory } from './_shared/progress-store.mjs';
 
 const db = getDatabase();
 const savedColumns = { 2: 'section_2_saved_at', 3: 'section_3_saved_at', 4: 'section_4_saved_at' };
+const healthHistoryTypes = ['welcome_food', 'welcome_everyday', 'welcome_health'];
 
 
 async function withdrawHealthConsent(query, userId) {
@@ -33,7 +35,7 @@ async function loadQuestionnaire(query, user) {
   };
 }
 
-async function saveWelcome(query, user, input) {
+async function saveWelcome(query, user, input, idempotencyKey) {
   const { values, error } = cleanSectionAnswers(1, input);
   if (error) return { status: 422, error };
   if (!values.preferredName) return { status: 422, error: 'Please enter the name you would like us to use.' };
@@ -45,6 +47,8 @@ async function saveWelcome(query, user, input) {
     VALUES ($1, $2::jsonb, NOW())
     ON CONFLICT (user_id) DO UPDATE SET answers = EXCLUDED.answers, updated_at = NOW()
   `, [user.id, JSON.stringify(values)]);
+  // The row above is the current copy; every save is also kept in history.
+  await appendWelcomeHistory(query, user.id, 1, values, idempotencyKey);
 
   const [profile] = await query('SELECT marketing_consent FROM profiles WHERE id = $1', [user.id]);
   const wantsMarketing = input.marketingConsent === true;
@@ -61,7 +65,7 @@ async function saveWelcome(query, user, input) {
   return { status: 200 };
 }
 
-async function saveHealthSection(query, user, section, input, healthConsent) {
+async function saveHealthSection(query, user, section, input, healthConsent, idempotencyKey) {
   const [existing] = await query('SELECT consent_given_at FROM member_health_information WHERE user_id = $1', [user.id]);
 
   if (section === 2 && !healthConsent) {
@@ -86,6 +90,7 @@ async function saveHealthSection(query, user, section, input, healthConsent) {
     SET answers = answers || $2::jsonb, ${savedColumns[section]} = NOW(), updated_at = NOW()
     WHERE user_id = $1
   `, [user.id, JSON.stringify(values)]);
+  await appendWelcomeHistory(query, user.id, section, values, idempotencyKey);
   return { status: 200, body: { healthConsent: true } };
 }
 
@@ -108,8 +113,10 @@ export default async function questionnaire(request) {
       await withdrawHealthConsent(query, user.id);
       if (body.scope === 'all') await query('DELETE FROM member_welcome_details WHERE user_id = $1', [user.id]);
     });
+    // Deleting answers also deletes their saved history (right to erasure).
+    await eraseWelcomeHistory(user.id, body.scope === 'all' ? ['welcome_details', ...healthHistoryTypes] : healthHistoryTypes);
     if (body.scope === 'all') {
-      await db.sql`DELETE FROM member_baselines WHERE user_id = ${user.id}`;
+      await db.sql`DELETE FROM legacy_member_baselines WHERE user_id = ${user.id}`;
       await db.sql`UPDATE profiles SET onboarding_completed = FALSE, updated_at = NOW() WHERE id = ${user.id}`;
     }
     return Response.json({ ok: true });
@@ -123,10 +130,13 @@ export default async function questionnaire(request) {
     if (section !== 1) {
       const [welcome] = await query('SELECT 1 FROM member_welcome_details WHERE user_id = $1', [user.id]);
       if (!welcome) return { status: 409, error: 'Please complete page 1 first.' };
-      return saveHealthSection(query, user, section, answers, body.healthConsent === true);
+      return saveHealthSection(query, user, section, answers, body.healthConsent === true, body.idempotencyKey);
     }
-    return saveWelcome(query, user, answers);
+    return saveWelcome(query, user, answers, body.idempotencyKey);
   });
+
+  // Withdrawing page 2 consent removes the saved history of pages 2 to 4 too.
+  if (section === 2 && body.healthConsent !== true && !result.error) await eraseWelcomeHistory(user.id, healthHistoryTypes);
 
   if (result.error) return Response.json({ error: result.error }, { status: result.status });
   return Response.json({ ok: true, ...result.body });

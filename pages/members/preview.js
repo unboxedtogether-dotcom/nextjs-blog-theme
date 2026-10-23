@@ -2,6 +2,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import SEO from '../../components/SEO';
 import Dashboard from '../../components/members/Dashboard';
+import { sampleProgressSummary } from '../../utils/progress-sample.mjs';
 
 // Sample-data preview of the member dashboard for reviewing the design on
 // deploy previews without signing in. It never loads real member data and is
@@ -30,12 +31,13 @@ const sample = {
     healthConsentGivenAt: '2026-10-01T09:10:00Z',
     sectionSavedAt: { 2: '2026-10-01T09:15:00Z', 3: null, 4: null },
   },
+  progress: sampleProgressSummary,
   isAdmin: false,
 };
 
 const notice = (
   <div className="preview-banner" role="note">
-    <strong>Design preview with sample data.</strong> Nothing here is a real member, and buttons that save will ask you to log in. This page only exists on deploy previews. <Link href="/signup">Create a test account</Link> to try the real dashboard.
+    <strong>Design preview with sample data.</strong> Nothing here is a real member, and buttons that save will ask you to log in. This page only exists on deploy previews. <Link href="/members/progress-preview">Preview My progress</Link> or <Link href="/signup">create a test account</Link> to try the real dashboard.
   </div>
 );
 

@@ -74,7 +74,7 @@ function QuestionnaireForm({ initial }) {
       const response = await fetch('/api/questionnaire', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ section: section.number, answers, healthConsent }),
+        body: JSON.stringify({ section: section.number, answers, healthConsent, idempotencyKey: crypto.randomUUID() }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'We could not save your answers.');
