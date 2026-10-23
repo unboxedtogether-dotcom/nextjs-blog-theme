@@ -31,7 +31,7 @@ export default function Login() {
   return (
     <>
       <SEO title="Log in | Unboxed Together" description="Log in to your Unboxed Together member account." path="/login" />
-      <AuthShell eyebrow="Member access" title="Welcome back" intro="Pick up where you left off with the additive library and your own starting point." footer={<p>New here? <Link href="/signup">Join free</Link></p>}>
+      <AuthShell eyebrow="Member access" title="Welcome back" intro="Pick up where you left off with the additive library and your own starting point." footer={<><p>New here? <Link href="/signup">Join free</Link></p><p>Owner or team member? <Link href="/login?next=/members/admin">Log in to the admin area</Link></p></>}>
         <form className="auth-form" onSubmit={submit}>
           <FormMessage error={status.error} />
           <label htmlFor="email">Email address</label>

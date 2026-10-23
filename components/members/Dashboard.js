@@ -45,6 +45,7 @@ export default function Dashboard({ initial, email, seo, notice = null }) {
             <p className="member-kicker">Your member space</p>
             <h1>Welcome, {profile.display_name}.</h1>
             <p className="hero-badges"><span className="plan-badge on-dark">{plan}</span><span>Membership active</span></p>
+            {initial.isAdmin && <p><Link className="member-button" href="/members/admin">Open admin / team area →</Link></p>}
           </div>
         </header>
         <nav className="dashboard-nav" aria-label="Dashboard sections">
@@ -52,6 +53,7 @@ export default function Dashboard({ initial, email, seo, notice = null }) {
           <Link href="/members/progress">My progress</Link>
           <Link href="/members/forms">My forms &amp; assessments</Link>
           <Link href="/members/profile">Account settings</Link>
+          {initial.isAdmin && <Link href="/members/admin">Admin / Team area</Link>}
         </nav>
 
         <div className="dashboard-layout">
