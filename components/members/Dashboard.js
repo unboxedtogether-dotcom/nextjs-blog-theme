@@ -54,6 +54,7 @@ export default function Dashboard({ initial, email, seo, notice = null }) {
           {sectionLinks.map(([href, label]) => <a key={href} href={href}>{label}</a>)}
           <Link href="/members/progress">My progress</Link>
           <Link href="/members/forms">My forms &amp; assessments</Link>
+          <Link href="/members/refer-a-friend">Refer a friend</Link>
           <Link href="/members/profile">Account settings</Link>
           {initial.isAdmin && <Link href="/members/admin">Admin / Team area</Link>}
         </nav>
@@ -86,6 +87,13 @@ export default function Dashboard({ initial, email, seo, notice = null }) {
           <ContactForm email={email} />
 
           <InterestLinkCard />
+
+          <Link className="dashboard-card account-shortcut" href="/members/refer-a-friend">
+            <span>Refer a friend</span>
+            <h2>Invite a friend to join</h2>
+            <p>Send a friend an email invitation with a link to the Join us page.</p>
+            <strong>Refer a friend →</strong>
+          </Link>
 
           <Link className="dashboard-card account-shortcut" href="/members/profile">
             <span>Account settings</span>
