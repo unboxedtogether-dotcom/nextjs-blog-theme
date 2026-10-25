@@ -10,7 +10,12 @@ const db = getDatabase();
 // RESEND_API_KEY and EMAIL_FROM environment variables. Credentials never reach
 // the browser.
 
-export const siteUrl = () => (process.env.EMAIL_SITE_URL || process.env.URL || 'https://www.unboxedtogether.com').replace(/\/$/, '');
+// Absolute site address for email links. A value saved without https:// would
+// otherwise produce links that email apps treat as relative and break.
+export const siteUrl = () => {
+  const base = (process.env.EMAIL_SITE_URL || process.env.URL || 'https://unboxedtogether.com').trim().replace(/\/+$/, '');
+  return /^https?:\/\//i.test(base) ? base : `https://${base}`;
+};
 export const emailDeliveryConfigured = () => Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM);
 
 const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);

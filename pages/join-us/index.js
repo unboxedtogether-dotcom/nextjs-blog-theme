@@ -38,17 +38,21 @@ const coming = [
 
 export default function JoinUs() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user: signedInUser } = useAuth();
+  // ?preview=friend shows a signed-in member the page exactly as an invited
+  // friend sees it (from the Refer a friend page).
+  const previewing = Boolean(signedInUser) && router.query.preview === 'friend';
+  const user = previewing ? null : signedInUser;
 
   // Campaign label from the invitation link (for example ?source=invite-oct26).
   // Only this short label is kept; nothing personal goes in the URL.
   useEffect(() => {
-    if (!router.isReady) return;
+    if (!router.isReady || router.query.preview === 'friend') return;
     const source = router.query.source || router.query.utm_campaign;
     if (typeof source === 'string' && source) {
       try { window.sessionStorage.setItem(joinSourceKey, source.slice(0, 60)); } catch { /* storage unavailable */ }
     }
-  }, [router.isReady, router.query.source, router.query.utm_campaign]);
+  }, [router.isReady, router.query.preview, router.query.source, router.query.utm_campaign]);
 
   const cta = user
     ? <Link href="/members" className="ut-btn ut-btn--primary">Go to my dashboard</Link>
@@ -58,6 +62,11 @@ export default function JoinUs() {
     <Layout>
       <SEO title="Join us | Unboxed Together" description="A personal journey. A book. A community. And something bigger we're building together. Tell us what you'd find useful." path="/join-us" />
 
+      {previewing && (
+        <div className="site-container">
+          <p className="join-note" role="status">This is the page your friend sees when they open your invitation. <Link href="/members/refer-a-friend">Back to Refer a friend</Link></p>
+        </div>
+      )}
       <section className="join-hero" aria-labelledby="join-title">
         <div className="site-container join-hero__grid">
           <div>

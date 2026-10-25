@@ -1,4 +1,5 @@
 import { getUser, verifyRequestOrigin } from '@netlify/identity';
+import { withConfirmedAccount } from './_shared/identity-accounts.mjs';
 import { ensureProfile } from './_shared/member-access.mjs';
 import { linkProspect, prospectsForMember, unlinkProspect } from './_shared/prospect-store.mjs';
 
@@ -9,7 +10,7 @@ const noStore = { 'Cache-Control': 'no-store' };
 // and nothing is linked until the member confirms. Answers are not returned
 // and are never copied into member records.
 export default async function memberInterest(request) {
-  const user = await getUser();
+  const user = await withConfirmedAccount(await getUser());
   if (!user) return Response.json({ error: 'Please log in to continue.' }, { status: 401, headers: noStore });
 
   if (request.method === 'GET') {
@@ -23,7 +24,7 @@ export default async function memberInterest(request) {
   } catch {
     return Response.json({ error: 'This request could not be accepted.' }, { status: 403, headers: noStore });
   }
-  if (!user.confirmedAt) return Response.json({ error: 'Please confirm your email address first.' }, { status: 403, headers: noStore });
+  if (!user.confirmedAt) return Response.json({ error: 'Please confirm your email address first. Use the link in the confirmation email we sent you, then log in again.' }, { status: 403, headers: noStore });
   await ensureProfile(user);
   const body = await request.json().catch(() => ({}));
   const done = body.action === 'unlink' ? await unlinkProspect(user, body.id) : await linkProspect(user, body.id);
