@@ -106,6 +106,28 @@ const templates = {
       text: `Hi ${firstName || 'there'},\n\nIt looks like a weekly check-in has been missed. When you have a few minutes you can add this week's check-in, or date one for an earlier week you missed: ${checkIn}\n\nLee\nUnboxed Together`,
     };
   },
+  // Sent on a member's behalf to a friend they chose. Holds only the member's
+  // first name, the friend's first name (if given) and the join-us link.
+  friend_referral: ({ friendName, memberName }) => {
+    const joinUs = `${siteUrl()}/join-us?source=member-referral`;
+    const from = memberName || 'A friend';
+    return {
+      subject: `${from} thinks you would like Unboxed Together`,
+      html: brandedEmail({
+        preheader: `${from} has invited you to help shape Unboxed Together.`,
+        heading: 'You have been invited to Unboxed Together',
+        paragraphs: [
+          `Hi ${escapeHtml(friendName || 'there')},`,
+          `${escapeHtml(from)} is a member of Unboxed Together and thought you might like to be part of it too.`,
+          'Unboxed Together is a growing community helping people understand food, ingredients and how what we eat makes us feel. No perfect diets. No quick fixes.',
+          'Have a look and, if it sounds like you, tell us what you would find useful. It only takes a few minutes and there is no account to set up.',
+        ],
+        button: { href: joinUs, label: 'Find out more' },
+        footer: `You are receiving this one-off email because ${escapeHtml(from)} asked us to send it to you. We have not added you to any mailing list.`,
+      }),
+      text: `Hi ${friendName || 'there'},\n\n${from} is a member of Unboxed Together and thought you might like to be part of it too.\n\nHave a look and, if it sounds like you, tell us what you would find useful: ${joinUs}\n\nYou are receiving this one-off email because ${from} asked us to send it. We have not added you to any mailing list.\n\nLee\nUnboxed Together`,
+    };
+  },
   welcome_reminder: ({ firstName }) => {
     const dashboard = `${siteUrl()}/members`;
     return {

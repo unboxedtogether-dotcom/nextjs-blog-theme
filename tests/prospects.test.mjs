@@ -77,6 +77,7 @@ describe('prospective member journey', () => {
       member: await load('member-data'),
       adminQuestionnaires: await load('admin-questionnaires'),
       adminMessages: await load('admin-messages'),
+      referral: await load('member-referral'),
     };
     identityEvents = (await import('../netlify/functions/identity.mjs')).default;
     store = await import('../netlify/functions/_shared/prospect-store.mjs');
@@ -352,6 +353,22 @@ describe('prospective member journey', () => {
     const confirmation = renderEmail('interest_confirmation', { firstName: '<script>', manageUrl: 'https://x.test/join-us/preferences#token=abc', marketingPending: true });
     assert.ok(!confirmation.html.includes('<script>'), 'names are escaped');
     assert.match(confirmation.html, /Confirm my email preferences/);
+  });
+
+  test('refer a friend needs a signed-in, confirmed member and emails only the join-us link', async () => {
+    assert.equal((await call(fn.referral, null, 'GET', '/api/member/refer')).status, 401);
+    const summary = await call(fn.referral, memberA, 'GET', '/api/member/refer');
+    assert.equal(summary.status, 200, summary.text);
+    assert.deepEqual(Object.keys(summary.body).sort(), ['remainingToday', 'sentThisMonth']);
+    // Test sessions carry no confirmation date, so sending is refused.
+    const unconfirmed = await call(fn.referral, memberA, 'POST', '/api/member/refer', { email: 'friend@prospects.test' });
+    assert.equal(unconfirmed.status, 403);
+    assert.equal(await count("SELECT count(*)::int AS n FROM email_outbox WHERE kind = 'friend_referral'"), 0);
+    const { renderEmail } = await import('../netlify/functions/_shared/email.mjs');
+    const email = renderEmail('friend_referral', { friendName: '<Sam>', memberName: 'Alex' });
+    assert.match(email.html, /\/join-us\?source=member-referral/);
+    assert.match(email.html, /&lt;Sam&gt;/, 'names are escaped');
+    assert.match(email.subject, /Alex/);
   });
 
   test('retention removes expired records without contact permission', async () => {
