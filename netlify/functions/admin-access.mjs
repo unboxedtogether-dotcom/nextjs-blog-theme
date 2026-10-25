@@ -4,6 +4,11 @@ import { authoriseAdmin, logAdminAccess, notAllowlistedMessage, withMemberAccess
 
 const db = getDatabase();
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Log actions that change something, as opposed to views, searches and lists.
+const changeActions = [
+  'add_private_note', 'mark_message_read', 'allowlist_add', 'allowlist_remove', 'allowlist_role', 'set_member_type', 'send_reminder',
+  'moderate_review', 'delete_review', 'erase_prospect', 'prospect_support_status', 'prospect_withdraw_permission', 'export_member_report', 'export_prospects',
+];
 
 async function listEntries(userId) {
   const rows = await db.sql`SELECT email, user_id, role, added_by, added_at, bound_at FROM member_admins ORDER BY added_at, email`;
@@ -20,6 +25,7 @@ export default async function adminAccess(request) {
   if (!callerRole) return Response.json({ error: (user.roles || []).includes('admin') ? notAllowlistedMessage : 'You do not have access to this area.' }, { status: 403 });
 
   if (request.method === 'GET') {
+    const changesOnly = new URL(request.url).searchParams.get('filter') === 'changes';
     const log = await withMemberAccess(user.id, async (query) => {
       await logAdminAccess(query, user.id, null, 'view_access_log');
       return query(`
@@ -28,8 +34,9 @@ export default async function adminAccess(request) {
         FROM questionnaire_admin_access_log l
         LEFT JOIN profiles a ON a.id = l.admin_user_id
         LEFT JOIN profiles m ON m.id = l.member_user_id
+        WHERE NOT $1 OR l.action = ANY($2::text[])
         ORDER BY l.accessed_at DESC LIMIT 200
-      `);
+      `, [changesOnly, changeActions]);
     }, 'admin');
     return Response.json({ entries: await listEntries(user.id), log, role: callerRole }, { headers: { 'Cache-Control': 'no-store' } });
   }

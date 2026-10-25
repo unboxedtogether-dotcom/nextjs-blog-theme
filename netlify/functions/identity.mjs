@@ -1,5 +1,6 @@
 import { getDatabase } from '@netlify/database';
 import { deliverQueuedEmails, queueEmail } from './_shared/email.mjs';
+import { recordConsent, withMemberAccess } from './_shared/member-access.mjs';
 
 const db = getDatabase();
 
@@ -30,6 +31,19 @@ const identityEvents = {
       )
       ON CONFLICT (id) DO NOTHING
     `;
+
+    // Consent ticked on the signup form belongs in the consent history too,
+    // so the team area shows when and how it was given.
+    if (marketingConsent) {
+      try {
+        await withMemberAccess(event.user.id, async (query) => {
+          const [existing] = await query("SELECT 1 FROM member_consent_events WHERE user_id = $1 AND consent_type = 'marketing_email' LIMIT 1", [event.user.id]);
+          if (!existing) await recordConsent(query, event.user.id, 'marketing_email', 'given', metadata.full_name || null);
+        });
+      } catch (error) {
+        console.error('Signup consent not recorded', error.message);
+      }
+    }
 
     // One branded welcome email per member. It waits in the outbox until an
     // email provider is configured, and a failure here never blocks signup.

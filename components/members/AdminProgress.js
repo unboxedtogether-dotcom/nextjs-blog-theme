@@ -101,6 +101,7 @@ function MemberProgress({ id, onClose }) {
         <h2>{profile.display_name}</h2>
         <dl className="submission-meta">
           <div><dt>Email</dt><dd>{profile.email || '—'}</dd></div>
+          <div><dt>Signed up</dt><dd>{formatDate(profile.signed_up_at)}</dd></div>
           <div><dt>Membership</dt><dd>{profile.membership_status} since {formatDate(profile.membership_started_at)}</dd></div>
           <div><dt>Progress tracking consent</dt><dd>{consent.given ? `Given ${formatDate(consent.givenAt)}` : 'Not given'}</dd></div>
           <div><dt>Baseline</dt><dd>{baseline ? formatDay(baseline.date) : 'Not completed'}</dd></div>
@@ -156,54 +157,130 @@ function MemberProgress({ id, onClose }) {
   );
 }
 
+const reminderLabels = { checkin: 'check-in', welcome: 'welcome form' };
+
+function ReminderCell({ member }) {
+  const last = [['checkin', member.reminders?.checkin], ['welcome', member.reminders?.welcome]]
+    .filter(([, reminder]) => reminder)
+    .sort((a, b) => new Date(b[1].at) - new Date(a[1].at))[0];
+  if (!last) return '—';
+  const [kind, reminder] = last;
+  const status = reminder.status === 'sent' ? 'Sent' : reminder.status === 'queued' ? 'Queued' : reminder.status === 'failed' ? 'Failed' : 'Not sent';
+  return <>{status} {formatDate(reminder.at)}<br /><small>{reminderLabels[kind]}</small></>;
+}
+
 // Read-only member progress for allowlisted admins. Every search, view, note
 // and export is recorded in the admin access log by the server.
 export default function AdminProgress() {
   const [term, setTerm] = useState('');
   const [query, setQuery] = useState('');
-  const [state, setState] = useState({ loading: true, error: '', members: [] });
+  const [reload, setReload] = useState(0);
+  const [state, setState] = useState({ loading: true, error: '', members: [], summary: null, emailDelivery: false });
   const [selected, setSelected] = useState('');
+  const [reminder, setReminder] = useState({ busy: '', notice: '', error: '' });
 
   useEffect(() => {
     fetch(`/api/admin/progress?q=${encodeURIComponent(query)}`)
       .then((response) => readJson(response, 'Members could not be loaded.'))
-      .then((data) => setState({ loading: false, error: '', members: data.members }))
-      .catch((error) => setState({ loading: false, error: error.message, members: [] }));
-  }, [query]);
+      .then((data) => setState({ loading: false, error: '', members: data.members, summary: data.summary, emailDelivery: data.emailDelivery }))
+      .catch((error) => setState((current) => ({ ...current, loading: false, error: error.message, members: [] })));
+  }, [query, reload]);
+
+  const remind = async (kind, members, label) => {
+    if (!members.length) return;
+    if (!window.confirm(`Send a ${reminderLabels[kind]} reminder email to ${label}?`)) return;
+    setReminder({ busy: kind, notice: '', error: '' });
+    try {
+      const data = await readJson(await fetch('/api/admin/progress', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'remind', kind, members }) }), 'The reminders could not be sent.');
+      const done = data.emailDelivery
+        ? `${data.sent} ${data.sent === 1 ? 'reminder' : 'reminders'} sent.`
+        : `${data.queued} ${data.queued === 1 ? 'reminder' : 'reminders'} queued. Email delivery is not configured yet, so they are held and not sent.`;
+      setReminder({ busy: '', notice: `${done}${data.skipped ? ` ${data.skipped} skipped (already reminded in the last few days, or no longer needed).` : ''}`, error: '' });
+      setReload((value) => value + 1);
+    } catch (error) {
+      setReminder({ busy: '', notice: '', error: error.message });
+    }
+  };
 
   if (selected) return <MemberProgress id={selected} onClose={() => setSelected('')} />;
+  const { summary } = state;
+  const checkinTargets = state.members.filter((member) => member.can_remind?.checkin).map((member) => member.id);
+  const welcomeTargets = state.members.filter((member) => member.can_remind?.welcome).map((member) => member.id);
+  const tiles = summary ? [
+    ['Members signed up', summary.members],
+    ['Joined in the last 7 days', summary.newThisWeek],
+    ...(summary.awaitingConfirmation === null ? [] : [['Awaiting email confirmation', summary.awaitingConfirmation]]),
+    ['Welcome form completed', summary.welcomeCompleted],
+    ['Welcome form not started', summary.welcomeNotStarted],
+    ['Baseline completed', summary.baselines],
+    ['Checked in this week', summary.checkedInThisWeek],
+    ['Missed a check-in', summary.missedCheckin],
+  ] : [];
+
   return (
-    <section className="profile-panel">
-      <h2>Member progress</h2>
-      <form className="admin-search" role="search" onSubmit={(event) => { event.preventDefault(); if (term.trim() !== query) { setState((current) => ({ ...current, loading: true })); setQuery(term.trim()); } }}>
-        <label className="sr-only" htmlFor="member-search">Search members by name or email</label>
-        <input id="member-search" className="wq-input" type="search" value={term} onChange={(event) => setTerm(event.target.value)} placeholder="Search by name or email" />
-        <button className="member-button" type="submit">Search</button>
-      </form>
-      {state.error && <p className="onboarding-error" role="alert">{state.error}</p>}
-      {state.loading ? <BrandLoader label="Loading members…" /> : (
-        <div className="admin-table-wrap">
-          <table className="admin-table">
-            <thead><tr><th>Name</th><th>Email</th><th>Welcome form</th><th>Baseline</th><th>Check-ins</th><th>Missed</th><th>Latest score</th><th>Last check-in</th><th><span className="sr-only">Actions</span></th></tr></thead>
-            <tbody>
-              {state.members.map((member) => (
-                <tr key={member.id}>
-                  <td>{member.display_name}</td>
-                  <td>{member.email || '—'}</td>
-                  <td>{member.welcome_completed_at ? <>Done {formatDate(member.welcome_completed_at)}{member.welcome_baseline_date && <><br /><small>Baseline date {formatDay(member.welcome_baseline_date)}</small></>}</> : 'Not started'}</td>
-                  <td>{member.baseline_date ? formatDay(member.baseline_date) : 'Not started'}</td>
-                  <td>{member.checkins}</td>
-                  <td>{member.missed ?? '—'}</td>
-                  <td>{member.latest_score === null ? '—' : `${Math.round(member.latest_score)}/100`}</td>
-                  <td>{member.last_checkin_date ? formatDay(member.last_checkin_date) : '—'}</td>
-                  <td><button className="text-button" type="button" onClick={() => setSelected(member.id)}>Open</button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {!state.members.length && <p>No members match.</p>}
-        </div>
+    <div className="admin-progress">
+      {summary && (
+        <section className="profile-panel">
+          <h2>Overview</h2>
+          <ul className="admin-tiles">{tiles.map(([label, value]) => <li key={label}><strong>{value}</strong><span>{label}</span></li>)}</ul>
+          <p className="dashboard-note">Counts cover every member, whatever the search below. “Missed” means a past week since the member’s baseline with no check-in; the current week is never counted as missed.</p>
+        </section>
       )}
-    </section>
+
+      <section className="profile-panel">
+        <h2>Reminders</h2>
+        <p>Send a short, friendly reminder email. It contains no answers or scores. Check-in reminders only go to members who have progress tracking turned on, and each member gets at most one reminder of each kind every 6 days.</p>
+        {!state.emailDelivery && !state.loading && <p className="dashboard-note">Email delivery is not configured yet, so reminders are queued and only sent once it is.</p>}
+        <div className="admin-search">
+          <button className="member-button" type="button" disabled={Boolean(reminder.busy) || !checkinTargets.length} onClick={() => remind('checkin', checkinTargets, `${checkinTargets.length} ${checkinTargets.length === 1 ? 'member' : 'members'} who missed a check-in`)}>
+            {reminder.busy === 'checkin' ? 'Sending…' : `Remind missed check-ins (${checkinTargets.length})`}
+          </button>
+          <button className="member-button secondary" type="button" disabled={Boolean(reminder.busy) || !welcomeTargets.length} onClick={() => remind('welcome', welcomeTargets, `${welcomeTargets.length} ${welcomeTargets.length === 1 ? 'member' : 'members'} who have not started the welcome form`)}>
+            {reminder.busy === 'welcome' ? 'Sending…' : `Remind welcome form not started (${welcomeTargets.length})`}
+          </button>
+        </div>
+        {query && <p className="dashboard-note">These buttons only include members matching “{query}”.</p>}
+        {reminder.notice && <p className="dashboard-note" role="status">{reminder.notice}</p>}
+        {reminder.error && <p className="onboarding-error" role="alert">{reminder.error}</p>}
+      </section>
+
+      <section className="profile-panel">
+        <h2>Member progress</h2>
+        <form className="admin-search" role="search" onSubmit={(event) => { event.preventDefault(); if (term.trim() !== query) { setState((current) => ({ ...current, loading: true })); setQuery(term.trim()); } }}>
+          <label className="sr-only" htmlFor="member-search">Search members by name or email</label>
+          <input id="member-search" className="wq-input" type="search" value={term} onChange={(event) => setTerm(event.target.value)} placeholder="Search by name or email" />
+          <button className="member-button" type="submit">Search</button>
+        </form>
+        {state.error && <p className="onboarding-error" role="alert">{state.error}</p>}
+        {state.loading ? <BrandLoader label="Loading members…" /> : (
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead><tr><th>Member</th><th>Joined</th><th>Welcome form</th><th>Baseline</th><th>Check-ins</th><th>Missed</th><th>Latest score</th><th>Last check-in</th><th>Last reminder</th><th><span className="sr-only">Actions</span></th></tr></thead>
+              <tbody>
+                {state.members.map((member) => (
+                  <tr key={member.id}>
+                    <td className="admin-table__member">{member.display_name || 'Member'}<br /><small>{member.email || 'No email on record'}</small></td>
+                    <td>{formatDate(member.signed_up_at)}</td>
+                    <td>{member.welcome_completed_at ? <>Done {formatDate(member.welcome_completed_at)}{member.welcome_baseline_date && <><br /><small>Baseline date {formatDay(member.welcome_baseline_date)}</small></>}</> : 'Not started'}</td>
+                    <td>{member.baseline_date ? formatDay(member.baseline_date) : 'Not started'}</td>
+                    <td>{member.checkins}{member.checked_in_this_week && <><br /><small>Done this week</small></>}</td>
+                    <td>{member.missed ?? '—'}</td>
+                    <td>{member.latest_score === null ? '—' : `${Math.round(member.latest_score)}/100`}</td>
+                    <td>{member.last_checkin_date ? formatDay(member.last_checkin_date) : '—'}</td>
+                    <td><ReminderCell member={member} /></td>
+                    <td><div className="admin-table__actions">
+                      <button className="text-button" type="button" onClick={() => setSelected(member.id)}>Open</button>
+                      {member.can_remind?.checkin && <button className="text-button" type="button" disabled={Boolean(reminder.busy)} onClick={() => remind('checkin', [member.id], member.display_name || 'this member')}>Remind check-in</button>}
+                      {member.can_remind?.welcome && <button className="text-button" type="button" disabled={Boolean(reminder.busy)} onClick={() => remind('welcome', [member.id], member.display_name || 'this member')}>Remind welcome form</button>}
+                    </div></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {!state.members.length && <p>No members match.</p>}
+          </div>
+        )}
+      </section>
+    </div>
   );
 }

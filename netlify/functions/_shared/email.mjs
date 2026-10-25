@@ -87,6 +87,43 @@ const templates = {
       text: `Hi ${firstName || 'there'},\n\nYour email is confirmed and your free membership is ready. Start with the short welcome form: ${dashboard}\n\nLee\nUnboxed Together`,
     };
   },
+  // Sent by the team from the admin area. Contains no answers or scores.
+  checkin_reminder: ({ firstName }) => {
+    const checkIn = `${siteUrl()}/members/check-in`;
+    return {
+      subject: 'A gentle reminder about your weekly check-in',
+      html: brandedEmail({
+        preheader: 'You can still add check-ins for the weeks you missed.',
+        heading: 'Time for a quick check-in?',
+        paragraphs: [
+          `Hi ${escapeHtml(firstName || 'there')},`,
+          'It looks like a weekly check-in has been missed. That is completely fine, and there is nothing to catch up on in one go.',
+          'When you have a few minutes, you can add this week’s check-in, or date one for an earlier week you missed. Each one helps you see how things are changing over time.',
+        ],
+        button: { href: checkIn, label: 'Open my check-in' },
+        footer: 'You are receiving this because you turned on progress tracking in your Unboxed Together account. Reply to this email if you would rather not get reminders.',
+      }),
+      text: `Hi ${firstName || 'there'},\n\nIt looks like a weekly check-in has been missed. When you have a few minutes you can add this week's check-in, or date one for an earlier week you missed: ${checkIn}\n\nLee\nUnboxed Together`,
+    };
+  },
+  welcome_reminder: ({ firstName }) => {
+    const dashboard = `${siteUrl()}/members`;
+    return {
+      subject: 'Your Unboxed Together welcome form is waiting',
+      html: brandedEmail({
+        preheader: 'It only takes a few minutes.',
+        heading: 'Finish setting up your membership',
+        paragraphs: [
+          `Hi ${escapeHtml(firstName || 'there')},`,
+          'Thank you for joining Unboxed Together. Your short welcome form has not been filled in yet.',
+          'It only takes a few minutes and helps us shape the support you get. The optional health and wellbeing sections can be skipped or completed later.',
+        ],
+        button: { href: dashboard, label: 'Open my member space' },
+        footer: 'You are receiving this because you created an Unboxed Together account. Reply to this email if you would rather not get reminders.',
+      }),
+      text: `Hi ${firstName || 'there'},\n\nThank you for joining Unboxed Together. Your short welcome form has not been filled in yet. It only takes a few minutes: ${dashboard}\n\nLee\nUnboxed Together`,
+    };
+  },
 };
 
 export async function queueEmail({ kind, to, prospectId = null, userId = null, payload = {} }) {
