@@ -1,6 +1,7 @@
 import { getDatabase } from '@netlify/database';
 import { getUser, verifyRequestOrigin } from '@netlify/identity';
 import { deliverQueuedEmails, emailDeliveryConfigured, queueEmail } from './_shared/email.mjs';
+import { withConfirmedAccount } from './_shared/identity-accounts.mjs';
 import { ensureProfile } from './_shared/member-access.mjs';
 import { emailSuppressed } from './_shared/prospect-store.mjs';
 
@@ -27,7 +28,7 @@ async function sentCounts(userId) {
 // send that friend one branded email linking to /join-us. The address is
 // only used for that email: no prospect record or mailing list entry is made.
 export default async function memberReferral(request) {
-  const user = await getUser();
+  const user = await withConfirmedAccount(await getUser());
   if (!user) return Response.json({ error: 'Please log in to continue.' }, { status: 401, headers: noStore });
 
   if (request.method === 'GET') {
@@ -41,7 +42,7 @@ export default async function memberReferral(request) {
   } catch {
     return Response.json({ error: 'This request could not be accepted.' }, { status: 403, headers: noStore });
   }
-  if (!user.confirmedAt) return Response.json({ error: 'Please confirm your email address first.' }, { status: 403, headers: noStore });
+  if (!user.confirmedAt) return Response.json({ error: 'Please confirm your email address first. Use the link in the confirmation email we sent you, then log in again.' }, { status: 403, headers: noStore });
 
   const body = await request.json().catch(() => ({}));
   const email = String(body.email || '').trim().toLowerCase();

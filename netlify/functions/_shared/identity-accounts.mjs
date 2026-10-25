@@ -30,3 +30,14 @@ export async function loadIdentityAccount(userId) {
     return null;
   }
 }
+
+// The signed-in user with an up-to-date email and confirmation date. When the
+// full account cannot be fetched, getUser() falls back to the login token,
+// which never carries confirmedAt, so a verified member would look
+// unverified. In that case the Identity account itself is the authority.
+export async function withConfirmedAccount(user) {
+  if (!user || user.confirmedAt) return user;
+  const account = await loadIdentityAccount(user.id);
+  if (!account) return user;
+  return { ...user, email: account.email || user.email, confirmedAt: account.confirmedAt };
+}

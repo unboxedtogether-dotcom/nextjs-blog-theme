@@ -43,7 +43,7 @@ export default function ReferAFriend() {
     body = (
       <section className="profile-panel" aria-labelledby="refer-heading">
         <h2 id="refer-heading">Send an invitation</h2>
-        <p>Enter your friend’s email address and we will send them a one-off email from Unboxed Together, with your first name and a link to our <Link href="/join-us">Join us</Link> page.</p>
+        <p>Enter your friend’s email address and we will send them a one-off email from Unboxed Together, with your first name and a link to our <Link href="/join-us?preview=friend">Join us</Link> page (tap it to see exactly what they will see).</p>
         <form className="contact-form" onSubmit={send}>
           <div className="profile-field">
             <label htmlFor="refer-name">Friend’s first name <span className="settings-note">(optional)</span></label>
