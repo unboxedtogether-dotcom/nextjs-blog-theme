@@ -8,8 +8,12 @@ const actionLabels = {
   search_member_progress: 'Searched members', view_member_progress: 'Viewed member progress', view_submission: 'Opened a submission',
   add_private_note: 'Added a private note', export_member_report: 'Exported a progress report', view_access_log: 'Viewed this log',
   allowlist_add: 'Added an admin', allowlist_remove: 'Removed an admin', allowlist_role: 'Changed an admin role',
-  list_member_types: 'Listed member types', set_member_type: 'Changed a member type',
+  list_member_types: 'Listed member types', set_member_type: 'Changed a member type', send_reminder: 'Sent a reminder email',
+  moderate_review: 'Moderated a book review', delete_review: 'Deleted a book review',
+  list_prospects: 'Listed prospective members', view_prospect: 'Viewed a prospective member', export_prospects: 'Exported contacts',
+  erase_prospect: 'Deleted a prospective member', prospect_support_status: 'Updated a support request', prospect_withdraw_permission: 'Recorded a permission withdrawal',
 };
+const detailLabels = { checkin: 'Check-in reminder', welcome: 'Welcome form reminder', free: 'Free Member', subscribed: 'Subscribed Member', moderator: 'Moderator' };
 const roleLabels = { admin: 'Admin', owner: 'Owner' };
 
 const send = async (method, email, role) => {
@@ -24,16 +28,17 @@ export default function AdminAccess() {
   const [state, setState] = useState({ loading: true, error: '', entries: [], log: [], role: null });
   const [email, setEmail] = useState('');
   const [notice, setNotice] = useState('');
+  const [changesOnly, setChangesOnly] = useState(false);
 
   useEffect(() => {
-    fetch('/api/admin/access')
+    fetch(`/api/admin/access${changesOnly ? '?filter=changes' : ''}`)
       .then(async (response) => {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Admin access could not be loaded.');
         setState({ loading: false, error: '', entries: data.entries, log: data.log, role: data.role });
       })
       .catch((error) => setState({ loading: false, error: error.message, entries: [], log: [] }));
-  }, []);
+  }, [changesOnly]);
 
   const change = async (method, value, role) => {
     setNotice('');
@@ -86,7 +91,11 @@ export default function AdminAccess() {
       </section>
       <section className="profile-panel">
         <h2>Admin access log</h2>
-        <p>The latest 200 admin actions on member records.</p>
+        <p>The latest 200 admin actions on member records{changesOnly ? ' that changed something (notes, member types, admin access, reminders, reviews and exports)' : ''}.</p>
+        <div className="review-filters">
+          <button type="button" className={!changesOnly ? 'is-active' : ''} onClick={() => setChangesOnly(false)}>Everything</button>
+          <button type="button" className={changesOnly ? 'is-active' : ''} onClick={() => setChangesOnly(true)}>Changes only</button>
+        </div>
         <div className="admin-table-wrap">
           <table className="admin-table">
             <thead><tr><th>When</th><th>Admin</th><th>Action</th><th>Member</th><th>Detail</th></tr></thead>
@@ -97,7 +106,7 @@ export default function AdminAccess() {
                   <td>{row.admin_name || row.admin_user_id}</td>
                   <td>{actionLabels[row.action] || row.action}</td>
                   <td>{row.member_name || (row.member_user_id ? 'Unknown member' : '—')}</td>
-                  <td>{row.detail || row.resource_type || ''}</td>
+                  <td>{detailLabels[row.detail] || row.detail || row.resource_type || ''}</td>
                 </tr>
               ))}
             </tbody>

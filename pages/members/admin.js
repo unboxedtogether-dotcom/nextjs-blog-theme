@@ -75,9 +75,10 @@ function MemberMessages() {
 
   if (state.loading) return <BrandLoader label="Loading messages…" />;
   if (state.error) return <p className="onboarding-error" role="alert">{state.error}</p>;
+  const newCount = state.messages.filter((item) => item.status === 'new').length;
   return (
     <section className="profile-panel">
-      <h2>{state.messages.filter((item) => item.status === 'new').length} new {state.messages.length === 1 ? 'message' : 'messages'}</h2>
+      <h2>{newCount} new {newCount === 1 ? 'message' : 'messages'} <small>of {state.messages.length}</small></h2>
       {state.messages.length === 0 && <p>No messages yet.</p>}
       <ul className="admin-messages">
         {state.messages.map((item) => (
@@ -103,7 +104,7 @@ export default function AdminQuestionnaires() {
       <Head><meta name="robots" content="noindex, nofollow" /></Head>
       <div className="member-page profile-page">
         <header className="member-hero compact"><p className="member-kicker">Team only</p><h1>Team area</h1><p>Confidential. Member records are read-only and every view, note and export is recorded. Do not copy answers into email.</p></header>
-        <nav className="dashboard-nav" aria-label="Team area sections">
+        <nav className="dashboard-nav admin-nav" aria-label="Team area sections">
           <button type="button" className={tab === 'progress' ? 'is-active' : ''} onClick={() => setTab('progress')}>Member progress</button>
           <button type="button" className={tab === 'questionnaires' ? 'is-active' : ''} onClick={() => setTab('questionnaires')}>Questionnaires</button>
           <button type="button" className={tab === 'messages' ? 'is-active' : ''} onClick={() => setTab('messages')}>Messages</button>
@@ -123,18 +124,19 @@ export default function AdminQuestionnaires() {
         {tab === 'questionnaires' && data && (selected ? <MemberDetail id={selected} onClose={() => setSelected('')} /> : (
           <section className="profile-panel">
             <h2>{data.members.length} {data.members.length === 1 ? 'member' : 'members'}</h2>
+            <p className="dashboard-note">{data.members.filter((member) => member.completed_at).length} completed page 1 · {data.members.filter((member) => member.consent_given_at).length} gave consent for pages 2 to 4 · {data.members.filter((member) => !member.completed_at).length} not started</p>
             <div className="admin-table-wrap">
               <table className="admin-table">
                 <thead><tr><th>Name</th><th>Email</th><th>Page 1</th><th>Consent</th><th>Pages saved</th><th><span className="sr-only">Actions</span></th></tr></thead>
                 <tbody>
                   {data.members.map((member) => (
                     <tr key={member.id}>
-                      <td>{member.display_name}</td>
-                      <td>{member.email}</td>
-                      <td>{formatDate(member.completed_at)}</td>
+                      <td>{member.display_name || 'Member'}</td>
+                      <td className="admin-table__member">{member.email || '—'}</td>
+                      <td>{member.completed_at ? formatDate(member.completed_at) : 'Not started'}</td>
                       <td>{member.consent_given_at ? formatDate(member.consent_given_at) : 'Not given'}</td>
                       <td>{[2, 3, 4].filter((number) => member[`section_${number}_saved_at`]).join(', ') || '—'}</td>
-                      <td><button className="text-button" type="button" onClick={() => setSelected(member.id)}>View answers</button></td>
+                      <td>{member.completed_at ? <button className="text-button" type="button" onClick={() => setSelected(member.id)}>View answers</button> : '—'}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -1,5 +1,6 @@
 import { getUser } from '@netlify/identity';
 import { authoriseAdmin, notAllowlistedMessage, withMemberAccess } from './_shared/member-access.mjs';
+import { loadIdentityAccounts } from './_shared/identity-accounts.mjs';
 
 // Read-only questionnaire access for Identity users with the `admin` role.
 // Every request is written to the admin access log.
@@ -11,22 +12,24 @@ export default async function adminQuestionnaires(request) {
   if (!(await authoriseAdmin(user))) return Response.json({ error: notAllowlistedMessage }, { status: 403 });
 
   const memberId = new URL(request.url).searchParams.get('member');
+  const accounts = memberId ? null : await loadIdentityAccounts();
 
   const result = await withMemberAccess(user.id, async (query) => {
     await query('INSERT INTO questionnaire_admin_access_log (admin_user_id, member_user_id, action) VALUES ($1, $2, $3)', [user.id, memberId, memberId ? 'view_questionnaire' : 'list_questionnaires']);
 
     if (!memberId) {
+      // Every member, including those who have not started the form yet.
       const members = await query(`
         SELECT p.id, p.display_name, p.marketing_consent, w.answers->>'email' AS email,
           w.completed_at, w.updated_at, h.consent_given_at,
           h.section_2_saved_at, h.section_3_saved_at, h.section_4_saved_at
         FROM profiles p
-        JOIN member_welcome_details w ON w.user_id = p.id
+        LEFT JOIN member_welcome_details w ON w.user_id = p.id
         LEFT JOIN member_health_information h ON h.user_id = p.id
-        ORDER BY GREATEST(w.updated_at, COALESCE(h.updated_at, w.updated_at)) DESC
+        ORDER BY (w.user_id IS NULL), GREATEST(w.updated_at, h.updated_at, p.created_at) DESC
         LIMIT 500
       `);
-      return { members };
+      return { members: members.map((member) => ({ ...member, email: accounts?.get(member.id)?.email || member.email })) };
     }
 
     const [profile] = await query('SELECT id, display_name, marketing_consent, marketing_consented_at, marketing_withdrawn_at FROM profiles WHERE id = $1', [memberId]);

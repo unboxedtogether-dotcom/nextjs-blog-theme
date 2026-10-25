@@ -1,11 +1,12 @@
 import { getDatabase } from '@netlify/database';
 import { getUser, verifyRequestOrigin } from '@netlify/identity';
-import { authoriseAdmin, notAllowlistedMessage } from './_shared/member-access.mjs';
+import { authoriseAdmin, logAdminAccess, notAllowlistedMessage, withMemberAccess } from './_shared/member-access.mjs';
 
 const db = getDatabase();
 const query = async (text, params = []) => (await db.pool.query(text, params)).rows;
 const statuses = ['pending', 'approved', 'rejected', 'removed'];
 const uuidPattern = /^[0-9a-f-]{36}$/i;
+const log = (user, action, id, detail) => withMemberAccess(user.id, (q) => logAdminAccess(q, user.id, null, action, 'book_review', id, detail), 'admin');
 
 // Book review moderation for allowlisted admins (Identity `admin` role plus the database allowlist),
 // because the moderation list includes reviewers' email addresses.
@@ -36,8 +37,9 @@ export default async function adminReviews(request) {
 
   // Permanent deletion is limited to rejected reviews (for example spam), so genuine feedback is kept.
   if (request.method === 'DELETE') {
-    const rows = await query("DELETE FROM book_reviews WHERE id = $1::uuid AND status = 'rejected' RETURNING id", [body.id]);
+    const rows = await query("DELETE FROM book_reviews WHERE id = $1::uuid AND status = 'rejected' RETURNING id, display_name", [body.id]);
     if (!rows.length) return Response.json({ error: 'Only rejected reviews can be deleted.' }, { status: 409 });
+    await log(user, 'delete_review', body.id, `Review by ${rows[0].display_name || 'a reader'}`);
     return Response.json({ ok: true });
   }
 
@@ -49,9 +51,10 @@ export default async function adminReviews(request) {
       moderated_at = NOW(),
       moderated_by = $3
     WHERE id = $1::uuid
-    RETURNING id, status, published_at, moderated_at, moderated_by
+    RETURNING id, status, published_at, moderated_at, moderated_by, display_name
   `, [body.id, body.status, user.email || user.id]);
   if (!review) return Response.json({ error: 'That review no longer exists.' }, { status: 404 });
+  await log(user, 'moderate_review', body.id, `Review by ${review.display_name || 'a reader'} → ${body.status}`);
   return Response.json({ ok: true, review });
 }
 
