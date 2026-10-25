@@ -33,7 +33,7 @@ export default function Login() {
       <SEO title="Log in | Unboxed Together" description="Log in to your Unboxed Together member account." path="/login" />
       <AuthShell eyebrow="Member access" title="Welcome back" intro="Pick up where you left off with the additive library and your own starting point." footer={<p>New here? <Link href="/signup">Join free</Link></p>}>
         <form className="auth-form" onSubmit={submit}>
-          <FormMessage error={status.error} />
+          <FormMessage error={status.error} success={router.query.expired && !status.error ? 'Your session has ended. Please log in again to continue.' : ''} />
           <label htmlFor="email">Email address</label>
           <input id="email" type="email" required autoComplete="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
           <div className="label-line"><label htmlFor="password">Password</label><Link href="/forgot-password">Forgotten password?</Link></div>

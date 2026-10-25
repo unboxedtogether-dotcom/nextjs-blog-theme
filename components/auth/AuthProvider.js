@@ -19,7 +19,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const callbackHash = window.location.hash;
-    const isAuthCallback = /(?:confirmation|recovery|invite|access)_token=/.test(callbackHash);
+    const isAuthCallback = /(?:confirmation|recovery|invite|email_change|access)_token=/.test(callbackHash);
     if (isAuthCallback && window.location.pathname !== '/auth/confirm') {
       window.location.replace(`/auth/confirm${callbackHash}`);
       return undefined;

@@ -8,6 +8,7 @@ import ProgressComingSoon from './ProgressComingSoon';
 import ProgressCard from './ProgressCard';
 import SubscriptionCard from './SubscriptionCard';
 import ContactForm from './ContactForm';
+import InterestLinkCard from './InterestLinkCard';
 import CommunityComingSoon from './CommunityComingSoon';
 import { BrandImage } from '../BrandLogo';
 import { memberTypes } from '../../utils/member-types.mjs';
@@ -83,6 +84,8 @@ export default function Dashboard({ initial, email, seo, notice = null }) {
           </Link>
 
           <ContactForm email={email} />
+
+          <InterestLinkCard />
 
           <Link className="dashboard-card account-shortcut" href="/members/profile">
             <span>Account settings</span>

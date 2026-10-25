@@ -9,6 +9,7 @@ import AdminReviews from '../../components/members/AdminReviews';
 import AdminProgress from '../../components/members/AdminProgress';
 import AdminAccess from '../../components/members/AdminAccess';
 import AdminMemberTypes from '../../components/members/AdminMemberTypes';
+import AdminProspects from '../../components/members/AdminProspects';
 import { SectionAnswers } from '../../components/members/SubmissionView';
 
 const formatDate = (value) => (value ? new Date(value).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) : '—');
@@ -106,6 +107,7 @@ export default function AdminQuestionnaires() {
           <button type="button" className={tab === 'progress' ? 'is-active' : ''} onClick={() => setTab('progress')}>Member progress</button>
           <button type="button" className={tab === 'questionnaires' ? 'is-active' : ''} onClick={() => setTab('questionnaires')}>Questionnaires</button>
           <button type="button" className={tab === 'messages' ? 'is-active' : ''} onClick={() => setTab('messages')}>Messages</button>
+          <button type="button" className={tab === 'prospects' ? 'is-active' : ''} onClick={() => setTab('prospects')}>Prospective members</button>
           <button type="button" className={tab === 'reviews' ? 'is-active' : ''} onClick={() => setTab('reviews')}>Book reviews</button>
           <button type="button" className={tab === 'types' ? 'is-active' : ''} onClick={() => setTab('types')}>Member types</button>
           <button type="button" className={tab === 'access' ? 'is-active' : ''} onClick={() => setTab('access')}>Admin access</button>
@@ -114,6 +116,7 @@ export default function AdminQuestionnaires() {
         {tab === 'types' && !error && <AdminMemberTypes />}
         {tab === 'access' && !error && <AdminAccess />}
         {tab === 'messages' && !error && <MemberMessages />}
+        {tab === 'prospects' && !error && <AdminProspects />}
         {tab === 'reviews' && !error && <AdminReviews />}
         {error && <p className="onboarding-error" role="alert">{error}</p>}
         {tab === 'questionnaires' && loading && !error && <BrandLoader label="Loading questionnaires…" />}
