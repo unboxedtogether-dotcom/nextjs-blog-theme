@@ -7,6 +7,15 @@ export function friendlyAuthError(error) {
   return 'Something went wrong. Please try again in a moment.';
 }
 
+// Only same-site paths. Backslashes and control characters are refused because
+// browsers treat a leading slash-backslash like `//`, which leaves the site.
 export function safeReturnPath(value, fallback = '/members') {
-  return typeof value === 'string' && value.startsWith('/') && !value.startsWith('//') ? value : fallback;
+  if (typeof value !== 'string' || !value.startsWith('/') || value.startsWith('//') || /[\\\u0000-\u001f]/.test(value)) return fallback;
+  try {
+    const base = 'https://unboxedtogether.invalid';
+    const url = new URL(value, base);
+    return url.origin === base ? `${url.pathname}${url.search}${url.hash}` : fallback;
+  } catch {
+    return fallback;
+  }
 }

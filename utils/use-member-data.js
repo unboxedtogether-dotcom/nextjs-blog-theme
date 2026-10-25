@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import { refreshSession } from '@netlify/identity';
 import { useAuth } from '../components/auth/AuthProvider';
+import { signOutCompletely } from './sign-out';
 
 export function useMemberData(endpoint = '/api/member') {
   const router = useRouter();
@@ -16,13 +18,18 @@ export function useMemberData(endpoint = '/api/member') {
     }
 
     const controller = new AbortController();
-    fetch(endpoint, { signal: controller.signal })
+    const load = () => fetch(endpoint, { signal: controller.signal });
+    load()
+      // An expired session is refreshed once and the request retried.
+      .then(async (response) => (response.status === 401 && await refreshSession().catch(() => null) ? load() : response))
       .then(async (response) => {
-        const data = await response.json();
         if (response.status === 401) {
-          router.replace(`/login?next=${encodeURIComponent(router.asPath)}`);
+          // Still rejected: the session has expired. Clear it fully so the login
+          // page does not bounce straight back here, then ask the member to log in.
+          signOutCompletely(`/login?expired=1&next=${encodeURIComponent(router.asPath)}`);
           return;
         }
+        const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Your member details could not be loaded.');
         setState({ data, loading: false, error: '', userId });
         // Keeps the header name and photo in step with the freshly loaded profile.

@@ -18,6 +18,7 @@ const navLinks = [
 
 // Secondary pages kept one click away rather than removed.
 const moreLinks = [
+  { href: '/join-us', label: 'Help shape Unboxed Together' },
   { href: '/barcode-challenge', label: '30-Day Barcode Challenge' },
   { href: '/brainz', label: 'Brainz Magazine' },
   { href: '/socials', label: 'Socials' },

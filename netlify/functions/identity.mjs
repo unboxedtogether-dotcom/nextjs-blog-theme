@@ -1,4 +1,5 @@
 import { getDatabase } from '@netlify/database';
+import { deliverQueuedEmails, queueEmail } from './_shared/email.mjs';
 
 const db = getDatabase();
 
@@ -29,6 +30,17 @@ const identityEvents = {
       )
       ON CONFLICT (id) DO NOTHING
     `;
+
+    // One branded welcome email per member. It waits in the outbox until an
+    // email provider is configured, and a failure here never blocks signup.
+    if (event.user.email) {
+      try {
+        const id = await queueEmail({ kind: 'member_welcome', to: event.user.email, userId: event.user.id, payload: { firstName: (metadata.full_name || '').split(' ')[0] } });
+        if (id) await deliverQueuedEmails({ ids: [id] });
+      } catch (error) {
+        console.error('Welcome email not queued', error.message);
+      }
+    }
 
     return {
       user: {
