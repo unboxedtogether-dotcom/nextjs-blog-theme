@@ -21,9 +21,13 @@ export default function Signup() {
     if (!form.accepted) return setStatus({ loading: false, error: 'Please agree to the Privacy Policy and Terms to create an account.', success: '' });
     setStatus({ loading: true, error: '', success: '' });
     try {
+      // A member's invitation token, if the visitor came from one, so the
+      // referral is credited once the email is confirmed.
+      const ref = typeof router.query.ref === 'string' && /^[A-Za-z0-9_-]{32,128}$/.test(router.query.ref) ? router.query.ref : '';
       const created = await signup(form.email.trim(), form.password, {
         full_name: form.name.trim(),
         marketing_consent: form.marketing,
+        ...(ref ? { referral_token: ref } : {}),
       });
       if (created.emailVerified) window.location.href = '/onboarding';
       else setStatus({ loading: false, error: '', success: 'Check your inbox to confirm your email. The link brings you back to finish setting up your account.' });

@@ -355,20 +355,23 @@ describe('prospective member journey', () => {
     assert.match(confirmation.html, /Confirm my email preferences/);
   });
 
-  test('refer a friend needs a signed-in, confirmed member and emails only the join-us link', async () => {
+  test('refer a friend needs a signed-in, confirmed member and never emails friends without consent', async () => {
     assert.equal((await call(fn.referral, null, 'GET', '/api/member/refer')).status, 401);
     const summary = await call(fn.referral, memberA, 'GET', '/api/member/refer');
     assert.equal(summary.status, 200, summary.text);
-    assert.deepEqual(Object.keys(summary.body).sort(), ['remainingToday', 'sentThisMonth']);
-    // Test sessions carry no confirmation date, so sending is refused.
+    assert.deepEqual(Object.keys(summary.body).sort(), ['createdThisMonth', 'preferredName', 'referrals', 'remainingToday']);
+    // Test sessions carry no confirmation date, so creating an invitation is refused.
     const unconfirmed = await call(fn.referral, memberA, 'POST', '/api/member/refer', { email: 'friend@prospects.test' });
     assert.equal(unconfirmed.status, 403);
     assert.equal(await count("SELECT count(*)::int AS n FROM email_outbox WHERE kind = 'friend_referral'"), 0);
     const { renderEmail } = await import('../netlify/functions/_shared/email.mjs');
-    const email = renderEmail('friend_referral', { friendName: '<Sam>', memberName: 'Alex' });
-    assert.match(email.html, /\/join-us\?source=member-referral/);
-    assert.match(email.html, /&lt;Sam&gt;/, 'names are escaped');
-    assert.match(email.subject, /Alex/);
+    const email = renderEmail('friend_referral', { referralUrl: 'https://x.test/join-us?ref=abc', referrerName: '<Sam>' });
+    assert.match(email.html, /join-us\?ref=abc/);
+    assert.match(email.html, /&lt;SAM&gt; THOUGHT YOU MIGHT FIND THIS INTERESTING/, 'names are escaped');
+    assert.equal(email.subject, 'You’ve been invited to discover Unboxed Together');
+    const anonymous = renderEmail('friend_referral', { referralUrl: 'https://x.test/join-us?ref=abc', referrerName: null });
+    assert.match(anonymous.html, /SOMEONE THOUGHT YOU MIGHT FIND THIS INTERESTING/);
+    assert.match(anonymous.html, /DISCOVER UNBOXED TOGETHER|Discover Unboxed Together/);
   });
 
   test('retention removes expired records without contact permission', async () => {

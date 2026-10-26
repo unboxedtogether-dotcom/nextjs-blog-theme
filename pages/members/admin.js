@@ -1,61 +1,37 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import Layout from '../../components/Layout';
 import SEO from '../../components/SEO';
 import { useMemberData } from '../../utils/use-member-data';
-import { questionnaireSections } from '../../utils/welcome-questionnaire.mjs';
 import BrandLoader from '../../components/BrandLoader';
 import AdminReviews from '../../components/members/AdminReviews';
 import AdminProgress from '../../components/members/AdminProgress';
 import AdminAccess from '../../components/members/AdminAccess';
 import AdminMemberTypes from '../../components/members/AdminMemberTypes';
 import AdminProspects from '../../components/members/AdminProspects';
-import { SectionAnswers } from '../../components/members/SubmissionView';
+import MemberDetail from '../../components/members/AdminQuestionnaireDetail';
+import AdminOverview from '../../components/members/AdminOverview';
+import AdminMembers from '../../components/members/AdminMembers';
+import AdminMemberRecord from '../../components/members/AdminMemberRecord';
+import AdminEmails from '../../components/members/AdminEmails';
+import AdminReferrals from '../../components/members/AdminReferrals';
+
+const tabs = [
+  ['overview', 'Overview'],
+  ['members', 'Members'],
+  ['emails', 'Emails & reminders'],
+  ['referrals', 'Referrals'],
+  ['progress', 'Member progress'],
+  ['questionnaires', 'Questionnaires'],
+  ['messages', 'Messages'],
+  ['prospects', 'Prospective members'],
+  ['reviews', 'Book reviews'],
+  ['types', 'Member types'],
+  ['access', 'Admin access'],
+];
 
 const formatDate = (value) => (value ? new Date(value).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) : '—');
-
-function MemberDetail({ id, onClose }) {
-  const [state, setState] = useState({ loading: true, error: '', member: null });
-  useEffect(() => {
-    fetch(`/api/admin/questionnaires?member=${encodeURIComponent(id)}`)
-      .then(async (response) => {
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'This member could not be loaded.');
-        setState({ loading: false, error: '', member: data.member });
-      })
-      .catch((error) => setState({ loading: false, error: error.message, member: null }));
-  }, [id]);
-
-  if (state.loading) return <BrandLoader label="Loading answers…" />;
-  if (state.error) return <p className="onboarding-error" role="alert">{state.error}</p>;
-  const { profile, welcome, health, consentHistory } = state.member;
-
-  return (
-    <section className="profile-panel admin-detail">
-      <button className="text-button" type="button" onClick={onClose}>← Back to all members</button>
-      <h2>{profile.display_name}</h2>
-      <p>Aged 18 or over confirmed {formatDate(welcome?.adult_confirmed_at)} · Marketing emails: {profile.marketing_consent ? `yes (since ${formatDate(profile.marketing_consented_at)})` : 'no'}</p>
-      <h3>1. {questionnaireSections[0].title}</h3>
-      {welcome ? <SectionAnswers section={questionnaireSections[0]} answers={welcome.answers} /> : <p>Not completed.</p>}
-      {health ? (
-        <>
-          <p className="admin-consent">Explicit consent for pages 2 to 4 given by {health.consent_name} on {formatDate(health.consent_given_at)}.</p>
-          {questionnaireSections.slice(1).map((section) => (
-            <div key={section.number}>
-              <h3>{section.number}. {section.title}</h3>
-              <p className="admin-saved">Saved {formatDate(health[`section_${section.number}_saved_at`])}</p>
-              <SectionAnswers section={section} answers={health.answers} />
-            </div>
-          ))}
-        </>
-      ) : <p className="admin-consent">No consent for pages 2 to 4. No health or wellbeing information is held.</p>}
-      <h3>Consent history</h3>
-      {consentHistory.length ? (
-        <ul className="admin-history">{consentHistory.map((event) => <li key={`${event.recorded_at}-${event.consent_type}`}>{formatDate(event.recorded_at)} — {event.consent_type === 'health_information' ? 'Health information (pages 2 to 4)' : 'Marketing emails'} {event.action}{event.recorded_name ? ` · ${event.recorded_name}` : ''}</li>)}</ul>
-      ) : <p>No consent changes recorded.</p>}
-    </section>
-  );
-}
 
 function MemberMessages() {
   const [state, setState] = useState({ loading: true, error: '', messages: [] });
@@ -95,24 +71,38 @@ function MemberMessages() {
 
 export default function AdminQuestionnaires() {
   const { data, loading, error } = useMemberData('/api/admin/questionnaires');
+  const router = useRouter();
   const [selected, setSelected] = useState('');
-  const [tab, setTab] = useState('progress');
+  // The open section, member and filter live in the address, so the back
+  // button and reloads keep the admin where they were.
+  const query = router.isReady ? router.query : {};
+  const tab = tabs.some(([key]) => key === query.tab) ? query.tab : 'overview';
+  const memberId = typeof query.member === 'string' ? query.member : '';
+  const memberFilter = typeof query.filter === 'string' ? query.filter : 'all';
+  const emailFilters = useMemo(() => ({ status: typeof query.status === 'string' ? query.status : '', kind: typeof query.kind === 'string' ? query.kind : '' }), [query.status, query.kind]);
+  const navigate = (next) => {
+    const params = Object.fromEntries(Object.entries({ tab: next.tab, member: next.member, filter: next.filter, status: next.status, kind: next.kind }).filter(([, value]) => value));
+    router.push({ pathname: '/members/admin', query: params }, undefined, { shallow: true });
+    window.scrollTo({ top: 0 });
+  };
+  const setTab = (key) => navigate({ tab: key });
+  const openMember = (id) => navigate({ tab: 'members', member: id, filter: memberFilter !== 'all' ? memberFilter : undefined });
 
   return (
     <Layout>
       <SEO title="Team area | Unboxed Together" description="Restricted member questionnaire access." path="/members/admin" />
       <Head><meta name="robots" content="noindex, nofollow" /></Head>
       <div className="member-page profile-page">
-        <header className="member-hero compact"><p className="member-kicker">Team only</p><h1>Team area</h1><p>Confidential. Member records are read-only and every view, note and export is recorded. Do not copy answers into email.</p></header>
+        <header className="member-hero compact"><p className="member-kicker">Team only</p><h1>Team area</h1><p>Confidential. Member records are read-only and every view, note, reminder and export is recorded. Do not copy answers into email.</p></header>
         <nav className="dashboard-nav admin-nav" aria-label="Team area sections">
-          <button type="button" className={tab === 'progress' ? 'is-active' : ''} onClick={() => setTab('progress')}>Member progress</button>
-          <button type="button" className={tab === 'questionnaires' ? 'is-active' : ''} onClick={() => setTab('questionnaires')}>Questionnaires</button>
-          <button type="button" className={tab === 'messages' ? 'is-active' : ''} onClick={() => setTab('messages')}>Messages</button>
-          <button type="button" className={tab === 'prospects' ? 'is-active' : ''} onClick={() => setTab('prospects')}>Prospective members</button>
-          <button type="button" className={tab === 'reviews' ? 'is-active' : ''} onClick={() => setTab('reviews')}>Book reviews</button>
-          <button type="button" className={tab === 'types' ? 'is-active' : ''} onClick={() => setTab('types')}>Member types</button>
-          <button type="button" className={tab === 'access' ? 'is-active' : ''} onClick={() => setTab('access')}>Admin access</button>
+          {tabs.map(([key, label]) => <button key={key} type="button" className={tab === key ? 'is-active' : ''} aria-current={tab === key ? 'page' : undefined} onClick={() => setTab(key)}>{label}</button>)}
         </nav>
+        {tab === 'overview' && data && <AdminOverview onNavigate={navigate} />}
+        {tab === 'members' && data && (memberId
+          ? <AdminMemberRecord key={memberId} id={memberId} onClose={() => navigate({ tab: 'members', filter: memberFilter !== 'all' ? memberFilter : undefined })} />
+          : <AdminMembers key={memberFilter} initialFilter={memberFilter} onOpenMember={openMember} />)}
+        {tab === 'emails' && data && <AdminEmails key={`${emailFilters.status}-${emailFilters.kind}`} initialFilters={emailFilters} onOpenMember={openMember} />}
+        {tab === 'referrals' && data && <AdminReferrals onOpenMember={openMember} />}
         {tab === 'progress' && !error && <AdminProgress />}
         {tab === 'types' && !error && <AdminMemberTypes />}
         {tab === 'access' && !error && <AdminAccess />}
@@ -120,7 +110,7 @@ export default function AdminQuestionnaires() {
         {tab === 'prospects' && !error && <AdminProspects />}
         {tab === 'reviews' && !error && <AdminReviews />}
         {error && <p className="onboarding-error" role="alert">{error}</p>}
-        {tab === 'questionnaires' && loading && !error && <BrandLoader label="Loading questionnaires…" />}
+        {loading && !error && <BrandLoader label="Checking your team access…" />}
         {tab === 'questionnaires' && data && (selected ? <MemberDetail id={selected} onClose={() => setSelected('')} /> : (
           <section className="profile-panel">
             <h2>{data.members.length} {data.members.length === 1 ? 'member' : 'members'}</h2>

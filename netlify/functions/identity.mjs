@@ -1,6 +1,7 @@
 import { getDatabase } from '@netlify/database';
 import { deliverQueuedEmails, queueEmail } from './_shared/email.mjs';
-import { recordConsent, withMemberAccess } from './_shared/member-access.mjs';
+import { ensureProfile, recordConsent, withMemberAccess } from './_shared/member-access.mjs';
+import { attributeRegistration } from './_shared/referrals.mjs';
 
 const db = getDatabase();
 
@@ -21,16 +22,30 @@ const identityEvents = {
     const metadata = event.user.userMetadata || {};
     const marketingConsent = metadata.marketing_consent === true;
 
+    const email = String(event.user.email || '').trim().toLowerCase();
+    // This event runs when the email is confirmed, so the account is verified now.
     await db.sql`
-      INSERT INTO profiles (id, display_name, marketing_consent, marketing_consented_at)
+      INSERT INTO profiles (id, display_name, marketing_consent, marketing_consented_at, account_email, email_verified_at, identity_synced_at)
       VALUES (
         ${event.user.id},
         ${metadata.full_name || ''},
         ${marketingConsent},
-        ${marketingConsent ? new Date().toISOString() : null}
+        ${marketingConsent ? new Date().toISOString() : null},
+        ${email.length >= 3 && email.length <= 254 ? email : null},
+        ${event.user.confirmedAt || new Date().toISOString()},
+        NOW()
       )
       ON CONFLICT (id) DO NOTHING
     `;
+    // A profile the team area made earlier from the Identity account is now confirmed.
+    await db.sql`UPDATE profiles SET email_verified_at = COALESCE(email_verified_at, NOW()) WHERE id = ${event.user.id}`;
+
+    // Credits the member who invited them, if they came from a referral link.
+    try {
+      await attributeRegistration({ ...event.user, confirmedAt: event.user.confirmedAt || new Date().toISOString() });
+    } catch (error) {
+      console.error('Referral not attributed', error.message);
+    }
 
     // Consent ticked on the signup form belongs in the consent history too,
     // so the team area shows when and how it was given.
@@ -64,7 +79,16 @@ const identityEvents = {
     };
   },
 
+  // Every login also repairs a missing profile (for accounts whose signup
+  // event did not run) and picks up a referral not yet credited. Neither can
+  // ever block the login.
   async userLogin(event) {
+    try {
+      await ensureProfile(event.user);
+      await attributeRegistration(event.user);
+    } catch (error) {
+      console.error('Login profile sync failed', error.message);
+    }
     const user = await withAllowlistedAdminRole(event.user);
     if (user) return { user };
   },

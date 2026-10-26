@@ -7,7 +7,7 @@ const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Log actions that change something, as opposed to views, searches and lists.
 const changeActions = [
   'add_private_note', 'mark_message_read', 'allowlist_add', 'allowlist_remove', 'allowlist_role', 'set_member_type', 'send_reminder',
-  'moderate_review', 'delete_review', 'erase_prospect', 'prospect_support_status', 'prospect_withdraw_permission', 'export_member_report', 'export_prospects',
+  'moderate_review', 'delete_review', 'erase_prospect', 'prospect_support_status', 'prospect_withdraw_permission', 'export_member_report', 'export_prospects', 'retry_email',
 ];
 
 async function listEntries(userId) {

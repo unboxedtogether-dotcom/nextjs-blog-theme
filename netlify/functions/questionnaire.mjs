@@ -100,6 +100,8 @@ export default async function questionnaire(request) {
   await ensureProfile(user);
 
   if (request.method === 'GET') {
+    // Marks the welcome form as started, so the team area can tell "in progress" from "not started".
+    await db.sql`UPDATE profiles SET welcome_started_at = NOW() WHERE id = ${user.id} AND welcome_started_at IS NULL`;
     return Response.json(await withMemberAccess(user.id, (query) => loadQuestionnaire(query, user)), { headers: { 'Cache-Control': 'no-store' } });
   }
 

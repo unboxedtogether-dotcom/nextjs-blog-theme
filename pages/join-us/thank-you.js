@@ -1,6 +1,7 @@
 import { useMemo, useSyncExternalStore } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import Layout from '../../components/Layout';
 import SEO from '../../components/SEO';
 import { BrandImage } from '../../components/BrandLogo';
@@ -16,6 +17,9 @@ const readSaved = () => {
 // are ever loaded here, so the page is safe to share or revisit.
 export default function JoinThankYou() {
   const { user } = useAuth();
+  const router = useRouter();
+  // Keeps a member's invitation with the visitor, so signing up credits them.
+  const ref = typeof router.query.ref === 'string' && /^[A-Za-z0-9_-]{32,128}$/.test(router.query.ref) ? router.query.ref : '';
   const saved = useSyncExternalStore(subscribe, readSaved, () => null);
   const result = useMemo(() => {
     try {
@@ -50,7 +54,7 @@ export default function JoinThankYou() {
           <div className="button-row">
             {user
               ? <Link href="/members" className="ut-btn ut-btn--primary">Go to my dashboard</Link>
-              : <Link href="/signup" className="ut-btn ut-btn--primary">Join the free community</Link>}
+              : <Link href={ref ? `/signup?ref=${encodeURIComponent(ref)}` : '/signup'} className="ut-btn ut-btn--primary">Join the free community</Link>}
             <Link href="/" className="ut-btn ut-btn--secondary">Explore the website</Link>
           </div>
           {!user && <p className="join-note">Membership is free and optional. We haven&apos;t created an account for you.</p>}

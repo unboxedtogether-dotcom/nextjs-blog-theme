@@ -1,3 +1,4 @@
+import { getDatabase } from '@netlify/database';
 import { getUser, verifyRequestOrigin } from '@netlify/identity';
 import { bioLimit } from '../../utils/member-options.mjs';
 import { cleanSectionAnswers } from '../../utils/welcome-questionnaire.mjs';
@@ -5,12 +6,15 @@ import { authoriseAdmin, ensureProfile, questionnaireStatus, recordConsent, with
 import { resolveMemberType } from '../../utils/member-types.mjs';
 import { appendWelcomeHistory, loadProgressState } from './_shared/progress-store.mjs';
 import { buildTimeline } from '../../utils/progress-timeline.mjs';
+import { attributeRegistration } from './_shared/referrals.mjs';
+
+const db = getDatabase();
 
 async function loadMember(query, user) {
   const [profile] = await query(`
     SELECT p.display_name, p.onboarding_completed, p.marketing_consent, p.marketing_consented_at, p.bio,
       p.avatar_updated_at, p.membership_tier, t.name AS membership_tier_name, p.is_moderator, p.membership_status,
-      p.membership_started_at, p.created_at
+      p.membership_started_at, p.created_at, p.reminder_emails_paused_at
     FROM profiles p JOIN membership_tiers t ON t.id = p.membership_tier
     WHERE p.id = $1
   `, [user.id]);
@@ -64,6 +68,7 @@ async function saveProfile(query, user, input) {
 
 async function savePreferences(query, user, input) {
   const [profile] = await query('SELECT display_name, marketing_consent FROM profiles WHERE id = $1', [user.id]);
+
   const wantsMarketing = input.marketingConsent === true;
   if (profile && wantsMarketing !== profile.marketing_consent) {
     await query(`
@@ -89,6 +94,8 @@ export default async function memberData(request) {
       const [profile] = await withMemberAccess(user.id, (query) => query('SELECT display_name, avatar_updated_at FROM profiles WHERE id = $1', [user.id]));
       return Response.json({ displayName: profile?.display_name || '', avatarUpdatedAt: profile?.avatar_updated_at || null, isAdmin: (user.roles || []).includes('admin') }, { headers: { 'Cache-Control': 'no-store' } });
     }
+    // Credits a referral the Identity events could not (for example a missed event).
+    await attributeRegistration(user).catch((error) => console.error('Referral not attributed', error.message));
     const result = await withMemberAccess(user.id, (query) => loadMember(query, user));
     const adminRole = await authoriseAdmin(user);
     const memberType = resolveMemberType({ membershipTier: result.profile?.membership_tier, isModerator: result.profile?.is_moderator, adminRole });
@@ -109,6 +116,15 @@ export default async function memberData(request) {
   });
 
   if (result.error) return Response.json({ error: result.error }, { status: result.status });
+  // Reminder emails (welcome form, check-ins) can be switched off separately
+  // from marketing. The restricted role cannot change this column, so it is
+  // set as the table owner, for the signed-in member's own row only.
+  if (typeof body.preferences?.reminderEmails === 'boolean') {
+    await db.sql`
+      UPDATE profiles SET reminder_emails_paused_at = CASE WHEN ${body.preferences.reminderEmails} THEN NULL ELSE COALESCE(reminder_emails_paused_at, NOW()) END
+      WHERE id = ${user.id}
+    `;
+  }
   return Response.json({ ok: true });
 }
 

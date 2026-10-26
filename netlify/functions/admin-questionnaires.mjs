@@ -1,6 +1,7 @@
 import { getUser } from '@netlify/identity';
 import { authoriseAdmin, notAllowlistedMessage, withMemberAccess } from './_shared/member-access.mjs';
 import { loadIdentityAccounts } from './_shared/identity-accounts.mjs';
+import { reconcileIdentityAccounts } from './_shared/member-directory.mjs';
 
 // Read-only questionnaire access for Identity users with the `admin` role.
 // Every request is written to the admin access log.
@@ -13,6 +14,8 @@ export default async function adminQuestionnaires(request) {
 
   const memberId = new URL(request.url).searchParams.get('member');
   const accounts = memberId ? null : await loadIdentityAccounts();
+  // Lists every registered account, including ones that never opened the member area.
+  if (accounts) await reconcileIdentityAccounts(accounts);
 
   const result = await withMemberAccess(user.id, async (query) => {
     await query('INSERT INTO questionnaire_admin_access_log (admin_user_id, member_user_id, action) VALUES ($1, $2, $3)', [user.id, memberId, memberId ? 'view_questionnaire' : 'list_questionnaires']);
@@ -20,7 +23,7 @@ export default async function adminQuestionnaires(request) {
     if (!memberId) {
       // Every member, including those who have not started the form yet.
       const members = await query(`
-        SELECT p.id, p.display_name, p.marketing_consent, w.answers->>'email' AS email,
+        SELECT p.id, p.display_name, p.marketing_consent, COALESCE(p.account_email, w.answers->>'email') AS email,
           w.completed_at, w.updated_at, h.consent_given_at,
           h.section_2_saved_at, h.section_3_saved_at, h.section_4_saved_at
         FROM profiles p

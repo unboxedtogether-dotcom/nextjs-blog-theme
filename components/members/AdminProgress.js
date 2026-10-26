@@ -60,7 +60,7 @@ function PrivateNoteForm({ onSave }) {
   );
 }
 
-function MemberProgress({ id, onClose }) {
+export function MemberProgress({ id, onClose }) {
   const [state, setState] = useState({ loading: true, error: '', member: null });
   const [submission, setSubmission] = useState(null);
   useEffect(() => {

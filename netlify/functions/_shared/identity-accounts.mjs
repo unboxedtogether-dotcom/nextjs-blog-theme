@@ -1,4 +1,7 @@
+import { getDatabase } from '@netlify/database';
 import { admin } from '@netlify/identity';
+
+const db = getDatabase();
 
 const PER_PAGE = 100;
 
@@ -10,11 +13,13 @@ const PER_PAGE = 100;
 export async function loadIdentityAccounts() {
   try {
     const accounts = new Map();
-    for (let page = 1; page <= 100; page += 1) {
+    // Keep paging until a page adds nobody new. Stopping on a short page
+    // missed accounts whenever Identity capped the page below PER_PAGE.
+    for (let page = 1; page <= 200; page += 1) {
       const users = await admin.listUsers({ page, perPage: PER_PAGE });
       const before = accounts.size;
       for (const user of users) accounts.set(user.id, user);
-      if (users.length < PER_PAGE || accounts.size === before) break;
+      if (!users.length || accounts.size === before) break;
     }
     return accounts;
   } catch (error) {
@@ -35,9 +40,12 @@ export async function loadIdentityAccount(userId) {
 // full account cannot be fetched, getUser() falls back to the login token,
 // which never carries confirmedAt, so a verified member would look
 // unverified. In that case the Identity account itself is the authority.
+// If Identity cannot be reached, the confirmation date saved on the profile
+// (copied from Identity at signup confirmation or by the team area) is used.
 export async function withConfirmedAccount(user) {
   if (!user || user.confirmedAt) return user;
   const account = await loadIdentityAccount(user.id);
-  if (!account) return user;
-  return { ...user, email: account.email || user.email, confirmedAt: account.confirmedAt };
+  if (account) return { ...user, email: account.email || user.email, confirmedAt: account.confirmedAt };
+  const [profile] = await db.sql`SELECT email_verified_at FROM profiles WHERE id = ${user.id}`;
+  return profile?.email_verified_at ? { ...user, confirmedAt: new Date(profile.email_verified_at).toISOString() } : user;
 }

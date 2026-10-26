@@ -75,6 +75,8 @@ function Questionnaire() {
     if (wantsContact && !details.email.trim()) return setStatus({ saving: false, error: 'Please add your email address so we can contact you, or untick the contact boxes.' });
     if (wantsContact && !details.firstName.trim()) return setStatus({ saving: false, error: 'Please add your first name so we know what to call you.' });
     setStatus({ saving: true, error: '' });
+    // Passed on from a member's invitation link, if the visitor came from one.
+    const referralToken = typeof router.query.ref === 'string' && /^[A-Za-z0-9_-]{32,128}$/.test(router.query.ref) ? router.query.ref : undefined;
     let source = '';
     try { source = window.sessionStorage.getItem(joinSourceKey) || ''; } catch { /* storage unavailable */ }
     try {
@@ -89,13 +91,14 @@ function Questionnaire() {
           firstName: details.firstName,
           email: details.email,
           consent: { project_contact: details.project_contact, general_marketing: details.general_marketing, sensitive_answers: sensitiveConsent },
-          source,
+          source: source || (referralToken ? 'member-referral' : ''),
+          referralToken,
         }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || 'Your answers could not be sent. Please try again.');
       try { window.sessionStorage.setItem(joinResultKey, JSON.stringify({ contactRequested: data.contactRequested === true, marketingPending: data.marketingPending === true })); } catch { /* storage unavailable */ }
-      router.replace('/join-us/thank-you');
+      router.replace(referralToken ? `/join-us/thank-you?ref=${encodeURIComponent(referralToken)}` : '/join-us/thank-you');
     } catch (error) {
       setStatus({ saving: false, error: error.message });
     }
