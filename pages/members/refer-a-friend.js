@@ -6,7 +6,10 @@ import BrandLoader from '../../components/BrandLoader';
 import FormMessage from '../../components/auth/FormMessage';
 import { StatusPill } from '../../components/members/AdminUi';
 import { useMemberData } from '../../utils/use-member-data';
-import { REFERRAL_SUBJECT, referralInvitationText } from '../../utils/referral-invitation.mjs';
+import { BrandImage } from '../../components/BrandLogo';
+import {
+  REFERRAL_BUTTON, REFERRAL_HEADLINE, REFERRAL_LEAD, REFERRAL_NOTE, REFERRAL_SUBJECT, referralInvitationText, referralKicker,
+} from '../../utils/referral-invitation.mjs';
 
 const seo = <SEO title="Refer a friend | Unboxed Together" description="Invite a friend to Unboxed Together." path="/members/refer-a-friend" />;
 const formatDate = (value) => (value ? new Date(value).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '');
@@ -42,22 +45,41 @@ function ShareInvitation({ referral, referrerName, onShared }) {
   const mailto = `mailto:${referral.recipient_email ? encodeURIComponent(referral.recipient_email) : ''}?subject=${encodeURIComponent(REFERRAL_SUBJECT)}&body=${encodeURIComponent(text)}`;
   const whatsapp = `https://wa.me/?text=${encodeURIComponent(text)}`;
 
+  const kickerName = referral.share_referrer_name ? referrerName : '';
+
   return (
-    <div>
-      <div className="referral-link">
-        <label className="sr-only" htmlFor={`link-${referral.id}`}>Your personal invitation link</label>
-        <input id={`link-${referral.id}`} className="wq-input" readOnly value={referral.url} onFocus={(event) => event.target.select()} />
-        <button className="member-button" type="button" onClick={() => copy(referral.url, 'Link copied')}>Copy link</button>
+    <div className="referral-invite">
+      <div className="referral-sharebox" aria-labelledby={`share-${referral.id}`}>
+        <h3 id={`share-${referral.id}`}>Share your invitation</h3>
+        <p className="settings-note">Send it straight from your phone to WhatsApp, Messages, email or any app you use.</p>
+        <div className="referral-share">
+          {canShare
+            ? <button className="member-button" type="button" onClick={share}>Share…</button>
+            : <a className="member-button" href={referral.url} target="_blank" rel="noopener noreferrer" onClick={() => copy(referral.url, 'Link copied, and opened in a new tab')}>Open my invitation link</a>}
+          <a className="member-button referral-whatsapp" href={whatsapp} target="_blank" rel="noopener noreferrer" onClick={() => onShared(referral.id, 'whatsapp')}>WhatsApp</a>
+          <a className="member-button secondary" href={mailto} onClick={() => onShared(referral.id, 'email_app')}>Send from my email</a>
+          <button className="member-button secondary" type="button" onClick={() => copy(text, 'Message copied')}>Copy message</button>
+        </div>
+        <div className="referral-link">
+          <label className="sr-only" htmlFor={`link-${referral.id}`}>Your personal invitation link</label>
+          <input id={`link-${referral.id}`} className="wq-input" readOnly value={referral.url} onFocus={(event) => event.target.select()} />
+          <button className="member-button secondary" type="button" onClick={() => copy(referral.url, 'Link copied')}>Copy link</button>
+        </div>
+        {copied && <p className="settings-note" role="status">{copied}</p>}
       </div>
-      <div className="referral-share">
-        {canShare && <button className="member-button secondary" type="button" onClick={share}>Share…</button>}
-        <a className="member-button secondary" href={mailto} onClick={() => onShared(referral.id, 'email_app')}>Send from my email</a>
-        <a className="member-button secondary" href={whatsapp} target="_blank" rel="noopener noreferrer" onClick={() => onShared(referral.id, 'whatsapp')}>WhatsApp</a>
-        <button className="member-button secondary" type="button" onClick={() => copy(text, 'Message copied')}>Copy message</button>
+
+      <p className="referral-card__label">What your friend sees</p>
+      <div className="referral-card">
+        <BrandImage variant="symbol" className="referral-card__mark" alt="" sizes="96px" />
+        <p className="ut-kicker">{referralKicker(kickerName)}</p>
+        <p className="referral-card__headline">{REFERRAL_HEADLINE}</p>
+        <p className="referral-card__lead">{REFERRAL_LEAD}</p>
+        {/* Opens the preview, not the friend's link, so it is not counted as opened. */}
+        <Link className="ut-btn ut-btn--primary referral-card__button" href="/join-us?preview=friend">{REFERRAL_BUTTON}</Link>
+        <p className="settings-note">{REFERRAL_NOTE}</p>
       </div>
-      {copied && <p className="settings-note" role="status">{copied}</p>}
       <details>
-        <summary className="text-button inline">See the message your friend will get</summary>
+        <summary className="text-button inline">See the message text</summary>
         <div className="referral-preview">{text}</div>
       </details>
     </div>

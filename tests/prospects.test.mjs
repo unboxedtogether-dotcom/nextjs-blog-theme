@@ -370,8 +370,10 @@ describe('prospective member journey', () => {
     assert.match(email.html, /&lt;SAM&gt; THOUGHT YOU MIGHT FIND THIS INTERESTING/, 'names are escaped');
     assert.equal(email.subject, 'You’ve been invited to discover Unboxed Together');
     const anonymous = renderEmail('friend_referral', { referralUrl: 'https://x.test/join-us?ref=abc', referrerName: null });
-    assert.match(anonymous.html, /SOMEONE THOUGHT YOU MIGHT FIND THIS INTERESTING/);
-    assert.match(anonymous.html, /DISCOVER UNBOXED TOGETHER|Discover Unboxed Together/);
+    assert.match(anonymous.html, />UNBOXED TOGETHER<\/p>/);
+    assert.match(anonymous.html, /I’M INTERESTED — LET’S GET STARTED/);
+    assert.match(anonymous.html, /WHAT IF UNDERSTANDING YOURSELF STARTED WITH UNDERSTANDING YOUR FOOD\?/);
+    assert.match(anonymous.text, /Someone thought you might find this interesting/);
   });
 
   test('retention removes expired records without contact permission', async () => {
