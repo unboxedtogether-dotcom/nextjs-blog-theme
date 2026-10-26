@@ -37,6 +37,7 @@ function SettingsContent({ initial, email }) {
   const [about, setAbout] = useState(initial.about);
   const [avatarVersion, setAvatarVersion] = useState(initial.profile.avatar_updated_at);
   const [marketing, setMarketing] = useState(initial.profile.marketing_consent === true);
+  const [reminders, setReminders] = useState(!initial.profile.reminder_emails_paused_at);
   const [healthConsentAt, setHealthConsentAt] = useState(initial.questionnaire.healthConsentGivenAt);
   const [status, setStatus] = useState({ area: '', loading: false, error: '', success: '' });
   const [answerAction, setAnswerAction] = useState('');
@@ -48,10 +49,11 @@ function SettingsContent({ initial, email }) {
   const savePreferences = async (event) => {
     event.preventDefault();
     setStatus({ area: 'communication', loading: true, error: '', success: '' });
-    const response = await fetch('/api/member', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ preferences: { marketingConsent: marketing } }) });
+    const response = await fetch('/api/member', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ preferences: { marketingConsent: marketing, reminderEmails: reminders } }) });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) return setStatus({ area: 'communication', loading: false, error: data.error || 'Your preferences could not be saved.', success: '' });
-    return setStatus({ area: 'communication', loading: false, error: '', success: marketing ? 'You will receive Unboxed Together news and offers by email.' : 'You will no longer receive marketing emails. Membership and service messages will continue.' });
+    const news = marketing ? 'You will receive Unboxed Together news and offers by email.' : 'You will not receive marketing emails.';
+    return setStatus({ area: 'communication', loading: false, error: '', success: `${news} ${reminders ? 'Reminder emails are on.' : 'Reminder emails are off.'} Essential account messages will continue.` });
   };
   const deleteAnswers = async (scope) => {
     setStatus({ area: 'privacy', loading: true, error: '', success: '' });
@@ -99,6 +101,7 @@ function SettingsContent({ initial, email }) {
             <form onSubmit={savePreferences}>
               <label className="wq-checkbox"><input type="checkbox" checked={marketing} onChange={(event) => setMarketing(event.target.checked)} /><span>Yes, email me Unboxed Together news, events, new services and offers. I can unsubscribe at any time. This is optional and separate from membership or service messages.</span></label>
               {profile.marketing_consented_at && initial.profile.marketing_consent && <p className="settings-note">Consent given on {longDate(profile.marketing_consented_at)}.</p>}
+              <label className="wq-checkbox"><input type="checkbox" checked={reminders} onChange={(event) => setReminders(event.target.checked)} /><span>Send me occasional reminders when my welcome form or weekly check-in is waiting. Reminders never include my answers or scores.</span></label>
               <p className="settings-note">We will always send essential messages about your account, such as password resets.</p>
               {message('communication')}
               <button className="member-button" type="submit" disabled={status.loading}>Save preferences</button>

@@ -126,10 +126,11 @@ describe('team area overview and reminders', () => {
     const before = await overview();
     assert.equal(before.byId[tracker.sub].can_remind.checkin, true);
     assert.equal(before.byId[newcomer.sub].can_remind.checkin, false, 'no baseline, no check-in reminder');
-    // Locally there is no Identity service, so the newcomer's account email is
-    // unknown and no reminder can be addressed; on the site Identity supplies it.
-    assert.equal(before.byId[newcomer.sub].email, null);
-    assert.equal(before.byId[newcomer.sub].can_remind.welcome, false, 'no email on record, no reminder');
+    // The sign-in email is saved on the profile on first visit, so a newcomer
+    // who has not started the welcome form can be reminded about it.
+    assert.equal(before.byId[newcomer.sub].email, newcomer.email);
+    assert.equal(before.byId[newcomer.sub].can_remind.welcome, true, 'welcome form not started');
+    assert.equal(before.byId[tracker.sub].can_remind.welcome, false, 'welcome form already completed');
 
     const member = await call(fn.adminProgress, tracker, 'POST', '/api/admin/progress', { action: 'remind', kind: 'checkin', members: [tracker.sub] });
     assert.equal(member.status, 403, 'members cannot send reminders');

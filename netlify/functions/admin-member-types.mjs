@@ -8,7 +8,7 @@ const noStore = { 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' };
 
 async function listMembers(query) {
   const members = await query(`
-    SELECT p.id, p.display_name, w.answers->>'email' AS email, p.membership_tier, p.is_moderator, p.created_at
+    SELECT p.id, p.display_name, COALESCE(p.account_email, w.answers->>'email') AS email, p.membership_tier, p.is_moderator, p.created_at
     FROM profiles p LEFT JOIN member_welcome_details w ON w.user_id = p.id
     ORDER BY p.display_name, p.created_at
     LIMIT 500

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -54,9 +54,24 @@ export default function JoinUs() {
     }
   }, [router.isReady, router.query.preview, router.query.source, router.query.utm_campaign]);
 
+  // A member's invitation link (?ref=...). The visit is recorded against the
+  // invitation on the server, without cookies, and the token is passed on in
+  // the address so a later interest form or signup is credited to them. The
+  // inviter's first name is only returned when they chose to share it.
+  const ref = !previewing && typeof router.query.ref === 'string' && /^[A-Za-z0-9_-]{32,128}$/.test(router.query.ref) ? router.query.ref : '';
+  const [referrerName, setReferrerName] = useState('');
+  useEffect(() => {
+    if (!ref || signedInUser) return;
+    fetch('/api/referral/open', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: ref }) })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => setReferrerName(typeof data?.referrerName === 'string' ? data.referrerName : ''))
+      .catch(() => {});
+  }, [ref, signedInUser]);
+  const withRef = (path) => (ref ? `${path}?ref=${encodeURIComponent(ref)}` : path);
+
   const cta = user
     ? <Link href="/members" className="ut-btn ut-btn--primary">Go to my dashboard</Link>
-    : <Link href="/join-us/questionnaire" className="ut-btn ut-btn--primary">I&apos;m interested — let&apos;s get started</Link>;
+    : <Link href={withRef('/join-us/questionnaire')} className="ut-btn ut-btn--primary">I&apos;m interested — let&apos;s get started</Link>;
 
   return (
     <Layout>
@@ -70,11 +85,11 @@ export default function JoinUs() {
       <section className="join-hero" aria-labelledby="join-title">
         <div className="site-container join-hero__grid">
           <div>
-            <p className="ut-kicker">Unboxed Together</p>
+            <p className="ut-kicker">{ref ? `${referrerName || 'Someone'} thought you might find this interesting` : 'Unboxed Together'}</p>
             <h1 id="join-title">What if understanding yourself started with understanding your food?</h1>
             <p className="ut-lead">A personal journey. A book. A community. And something bigger we&apos;re building together.</p>
             <div className="button-row">{cta}</div>
-            {!user && <p className="join-note">It takes around two minutes. No obligation to join.</p>}
+            {!user && <p className="join-note">It takes around two minutes. No obligation to join.{ref && <> Ready to join now? <Link href={withRef('/signup')}>Create a free account</Link>.</>}</p>}
           </div>
           <BrandImage variant="symbol" className="join-hero__mark" alt="" priority sizes="(max-width: 860px) 40vw, 260px" />
         </div>

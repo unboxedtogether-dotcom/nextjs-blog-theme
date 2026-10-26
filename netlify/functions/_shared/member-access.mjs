@@ -29,11 +29,23 @@ export const recordConsent = (query, userId, type, action, name = null) => query
   [userId, type, action, name],
 );
 
+// Creates the profile on first use and keeps the sign-in email in step with
+// Identity, so the team area always knows who the member is. The
+// verification date is only ever copied from Identity, never assumed.
+// Nothing else on an existing profile is changed.
 export async function ensureProfile(user) {
+  const email = String(user.email || '').trim().toLowerCase();
+  const accountEmail = email.length >= 3 && email.length <= 254 ? email : null;
+  const verifiedAt = user.confirmedAt || null;
   await db.sql`
-    INSERT INTO profiles (id, display_name)
-    VALUES (${user.id}, ${user.userMetadata?.full_name || user.email?.split('@')[0] || 'Member'})
-    ON CONFLICT (id) DO NOTHING
+    INSERT INTO profiles (id, display_name, account_email, email_verified_at, identity_synced_at)
+    VALUES (${user.id}, ${user.userMetadata?.full_name || user.email?.split('@')[0] || 'Member'}, ${accountEmail}, ${verifiedAt}, NOW())
+    ON CONFLICT (id) DO UPDATE SET
+      account_email = COALESCE(EXCLUDED.account_email, profiles.account_email),
+      email_verified_at = COALESCE(profiles.email_verified_at, EXCLUDED.email_verified_at),
+      identity_synced_at = NOW()
+    WHERE (EXCLUDED.account_email IS NOT NULL AND profiles.account_email IS DISTINCT FROM EXCLUDED.account_email)
+      OR (profiles.email_verified_at IS NULL AND EXCLUDED.email_verified_at IS NOT NULL)
   `;
 }
 

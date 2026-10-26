@@ -3,6 +3,7 @@ import { verifyRequestOrigin } from '@netlify/identity';
 import { cleanProspectSubmission } from '../../utils/prospect-questionnaire.mjs';
 import { deliverQueuedEmails, queueEmail, siteUrl } from './_shared/email.mjs';
 import { emailSuppressed, isUuid, recentAttempts, saveProspect } from './_shared/prospect-store.mjs';
+import { attributeProspect } from './_shared/referrals.mjs';
 
 const noStore = { 'Cache-Control': 'no-store' };
 const MIN_FILL_MS = 5000;
@@ -54,6 +55,10 @@ export default async function prospectInterest(request, context) {
     }
 
     const saved = await saveProspect(values, { idempotencyKey: body.idempotencyKey, submitterHash: hash });
+    // Came from a member's invitation link: credit that invitation.
+    if (!saved.duplicate && saved.prospectId && body.referralToken) {
+      await attributeProspect(String(body.referralToken), saved.prospectId).catch((refError) => console.error('Referral not linked', refError.message));
+    }
     const contactRequested = values.permissions.project_contact;
     const marketingPending = values.permissions.general_marketing;
 
