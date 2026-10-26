@@ -2356,6 +2356,19 @@ section[id], [id="footer"] { scroll-margin-top: 6rem; }
 .referral-share { display: flex; flex-wrap: wrap; gap: .6rem; }
 .referral-share .member-button { min-height: 2.75rem; }
 .referral-preview { margin: 1rem 0; padding: 1rem 1.2rem; border-left: 4px solid var(--brand-blue); border-radius: .6rem; background: var(--brand-blue-50); white-space: pre-wrap; font-size: .95rem; }
+.referral-invite { margin-top: 1.5rem; }
+.referral-sharebox { padding: 1.2rem; border: 2px solid var(--brand-blue); border-radius: 1.1rem; background: var(--brand-blue-50); }
+.referral-sharebox h3 { margin: 0 0 .3rem; }
+.referral-sharebox .referral-link { margin-bottom: 0; }
+.referral-share .member-button.referral-whatsapp { border-color: #128c4a; background: #128c4a; }
+.referral-share .member-button.referral-whatsapp:hover { border-color: #0d6d39; background: #0d6d39; }
+.referral-card__label { margin: 1.5rem 0 .5rem; color: var(--color-muted); font-size: .8rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.referral-card { max-width: 32rem; padding: 1.4rem; border: 1px solid #cbdced; border-radius: 1.2rem; background: white; box-shadow: 0 10px 30px rgba(24, 67, 244, .08); }
+.referral-card__mark { display: block; width: 4.5rem; height: auto; margin-bottom: 1rem; }
+.referral-card .ut-kicker { margin: 0 0 .5rem; }
+.referral-card__headline { margin: 0 0 .8rem; font-family: var(--font-heading); font-size: clamp(1.5rem, 5vw, 2rem); font-weight: 900; line-height: 1.1; text-transform: uppercase; }
+.referral-card__lead { margin: 0 0 1rem; font-size: 1.05rem; }
+.referral-card__button { display: flex; width: 100%; justify-content: center; text-align: center; }
 .referral-list { display: grid; gap: .75rem; margin: 0; padding: 0; list-style: none; }
 .referral-list li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; padding: .9rem 1rem; border: 1px solid #e6e9f8; border-radius: .9rem; }
 .referral-list .text-button { margin-top: 0; }

@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { getDatabase } from '@netlify/database';
 import {
-  REFERRAL_BUTTON, REFERRAL_SUBJECT, referralClosing, referralInvitationText, referralOpening, referralParagraphs, referralProjects,
+  REFERRAL_BUTTON, REFERRAL_HEADLINE, REFERRAL_LEAD, REFERRAL_NOTE, REFERRAL_SUBJECT, referralInvitationText, referralKicker, referralOpening,
 } from '../../../utils/referral-invitation.mjs';
 
 const db = getDatabase();
@@ -27,12 +27,23 @@ const font = "font-family:'Source Sans 3','Segoe UI',Helvetica,Arial,sans-serif;
 const paragraph = (text, extra = '') => `<p style="margin:0 0 16px;${font}font-size:17px;line-height:1.6;color:#0b0b0d;${extra}">${text}</p>`;
 
 // Same frame as the Identity email templates in public/email-templates.
-export function brandedEmail({ preheader, heading, paragraphs, button, footer }) {
+// `hero` gives the Join us page look: a blue kicker, a large uppercase
+// headline and a full-width button with a short note and plain link below.
+export function brandedEmail({ preheader, heading, paragraphs, button, footer, hero = null }) {
   const base = siteUrl();
-  const buttonHtml = button ? `
+  const buttonHtml = button && hero ? `
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:10px 0 0;">
+              <a href="${escapeHtml(button.href)}" target="_blank" style="display:block;padding:20px 18px;background:#1843f4;border-radius:16px;font-family:Montserrat,'Segoe UI',Arial,sans-serif;font-size:17px;line-height:1.25;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;text-align:center;color:#ffffff;text-decoration:none;">${escapeHtml(button.label.toUpperCase())}</a>
+            </td></tr></table>
+            ${hero.note ? paragraph(escapeHtml(hero.note), 'margin:14px 0 8px;font-size:15px;color:#52647a;') : ''}
+            ${paragraph(`Button not working? Open this link: <a href="${escapeHtml(button.href)}" target="_blank" style="color:#1843f4;word-break:break-all;">${escapeHtml(button.href)}</a>`, 'margin:0 0 8px;font-size:13px;color:#52647a;')}` : button ? `
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:14px 0 28px;">
               <a href="${escapeHtml(button.href)}" target="_blank" style="display:inline-block;padding:17px 36px;background:#1843f4;border-radius:999px;${font}font-size:16px;line-height:1.2;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#ffffff;text-decoration:none;">${escapeHtml(button.label)}</a>
             </td></tr></table>` : '';
+  const headingHtml = hero
+    ? `<p style="margin:0 0 14px;font-family:Montserrat,'Segoe UI',Arial,sans-serif;font-size:14px;line-height:1.4;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:#1843f4;">${escapeHtml(hero.kicker.toUpperCase())}</p>
+      <h1 style="margin:0 0 20px;font-family:Montserrat,'Segoe UI',Arial,sans-serif;font-size:34px;line-height:1.12;font-weight:900;text-transform:uppercase;color:#0b0b0d;">${escapeHtml(heading.toUpperCase())}</h1>`
+    : `<h1 style="margin:0 0 22px;font-family:Montserrat,'Segoe UI',Arial,sans-serif;font-size:26px;line-height:1.2;font-weight:800;color:#0b0b0d;">${escapeHtml(heading)}</h1>`;
   return `<!DOCTYPE html>
 <html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light"><title>${escapeHtml(heading)}</title></head>
 <body style="margin:0;padding:0;background:#f4f6ff;">
@@ -40,9 +51,9 @@ export function brandedEmail({ preheader, heading, paragraphs, button, footer })
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f6ff;"><tr><td align="center" style="padding:32px 12px;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;background:#ffffff;border:1px solid #cbdced;border-radius:20px;">
     <tr><td style="height:6px;line-height:6px;font-size:0;background:#1843f4;border-radius:20px 20px 0 0;">&nbsp;</td></tr>
-    <tr><td align="center" style="padding:32px 24px 8px;"><a href="${base}" target="_blank"><img src="${base}/email-templates/unboxed-together-logo.png" width="200" alt="Unboxed Together" style="display:block;width:200px;max-width:70%;height:auto;margin:0 auto;"></a></td></tr>
+    <tr><td align="${hero ? 'left' : 'center'}" style="padding:32px ${hero ? '32px' : '24px'} 8px;"><a href="${base}" target="_blank"><img src="${base}/email-templates/unboxed-together-logo.png" width="200" alt="Unboxed Together" style="display:block;width:200px;max-width:70%;height:auto;margin:${hero ? '0' : '0 auto'};"></a></td></tr>
     <tr><td style="padding:28px 32px 12px;">
-      <h1 style="margin:0 0 22px;font-family:Montserrat,'Segoe UI',Arial,sans-serif;font-size:26px;line-height:1.2;font-weight:800;color:#0b0b0d;">${escapeHtml(heading)}</h1>
+      ${headingHtml}
       ${paragraphs.map((text) => paragraph(text)).join('\n      ')}
       ${buttonHtml}
       ${paragraph('<strong>Lee</strong><br>Unboxed Together<br><a href="https://www.unboxedtogether.com" style="color:#1843f4;text-decoration:none;font-weight:700;">www.unboxedtogether.com</a>', 'margin-top:24px;')}
@@ -61,7 +72,7 @@ const reminderFooter = (reason) => `You are receiving this because ${reason}. <a
 
 // Bumped whenever a template's wording changes, and stored with each email.
 export const templateVersions = {
-  interest_confirmation: 'v1', member_welcome: 'v1', welcome_reminder: 'v2', checkin_reminder: 'v2', baseline_reminder: 'v1', friend_referral: 'v2',
+  interest_confirmation: 'v1', member_welcome: 'v1', welcome_reminder: 'v2', checkin_reminder: 'v2', baseline_reminder: 'v1', friend_referral: 'v3',
 };
 
 const templates = {
@@ -155,13 +166,9 @@ const templates = {
     subject: REFERRAL_SUBJECT,
     html: brandedEmail({
       preheader: referralOpening(referrerName),
-      heading: referralOpening(referrerName).toUpperCase(),
-      paragraphs: [
-        ...referralParagraphs.map((line) => escapeHtml(line).replace('Unboxed – The Dirty Secret Hiding In Our Diet', '<strong>Unboxed – The Dirty Secret Hiding In Our Diet</strong>')),
-        `Now we’re developing:<br>${referralProjects.map((line) => `&bull; ${escapeHtml(line)}`).join('<br>')}`,
-        escapeHtml(referralClosing[0]),
-        `<strong>${escapeHtml(referralClosing[1])}</strong>`,
-      ],
+      hero: { kicker: referralKicker(referrerName), note: REFERRAL_NOTE },
+      heading: REFERRAL_HEADLINE,
+      paragraphs: [escapeHtml(REFERRAL_LEAD)],
       button: { href: referralUrl, label: REFERRAL_BUTTON },
       footer: 'You are receiving this one-off invitation because you previously agreed to hear from Unboxed Together and a member suggested it to you. We have not added you to any new mailing list. <a href="mailto:support@unboxedtogether.com?subject=Unsubscribe" style="color:#52647a;">Unsubscribe</a> &middot;',
     }),
