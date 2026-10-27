@@ -82,8 +82,8 @@ export const siteConfig = {
       description: 'Explore ingredients, understand food labels, discover the book Unboxed and connect with a community built around learning, sharing and supporting one another.',
     },
     additives: {
-      title: 'Search Food Additives | Unboxed Together',
-      description: 'Search by E number or additive name and see clear, practical information from the Unboxed Additive Library.',
+      title: 'Food Database: Search Ingredients and Additives | Unboxed Together',
+      description: 'Search ingredients, additives and E numbers in one place and see clear, practical information from the Unboxed Food Database.',
     },
     story: {
       title: 'My Story | Unboxed Together',

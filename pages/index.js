@@ -129,7 +129,7 @@ export default function Home() {
           <div className="search-preview" aria-hidden="true">
             <div className="search-preview__field">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
-              <span>Search by E number or additive name</span>
+              <span>Search ingredients, additives or E numbers</span>
             </div>
             <div className="search-preview__result">
               <strong>E621</strong>

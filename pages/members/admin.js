@@ -16,6 +16,7 @@ import AdminMembers from '../../components/members/AdminMembers';
 import AdminMemberRecord from '../../components/members/AdminMemberRecord';
 import AdminEmails from '../../components/members/AdminEmails';
 import AdminReferrals from '../../components/members/AdminReferrals';
+import AdminFoodLibrary from '../../components/members/AdminFoodLibrary';
 
 const tabs = [
   ['overview', 'Overview'],
@@ -27,6 +28,7 @@ const tabs = [
   ['messages', 'Messages'],
   ['prospects', 'Prospective members'],
   ['reviews', 'Book reviews'],
+  ['food', 'Food library'],
   ['types', 'Member types'],
   ['access', 'Admin access'],
 ];
@@ -109,6 +111,7 @@ export default function AdminQuestionnaires() {
         {tab === 'messages' && !error && <MemberMessages />}
         {tab === 'prospects' && !error && <AdminProspects />}
         {tab === 'reviews' && !error && <AdminReviews />}
+        {tab === 'food' && !error && <AdminFoodLibrary />}
         {error && <p className="onboarding-error" role="alert">{error}</p>}
         {loading && !error && <BrandLoader label="Checking your team access…" />}
         {tab === 'questionnaires' && data && (selected ? <MemberDetail id={selected} onClose={() => setSelected('')} /> : (
