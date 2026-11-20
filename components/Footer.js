@@ -9,6 +9,7 @@ const quickLinks = [
   ['/additives', 'Food Database'],
   ['/book', 'The Book'],
   ['/story', 'My Story'],
+  ['/trisha-britton', 'Meet Trisha Britton, RN'],
   ['/community', 'Community'],
   ['/barcode-challenge', '30-Day Barcode Challenge'],
   ['/brainz', 'Brainz Magazine'],

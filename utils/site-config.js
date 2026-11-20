@@ -95,7 +95,11 @@ export const siteConfig = {
     },
     brainz: {
       title: 'Brainz Magazine | Unboxed Together',
-      description: 'Publications and features in Brainz Magazine by Unboxed Together.',
+      description: 'Brainz Magazine articles and features from Unboxed Together Executive Contributors Lee Jones and Trisha Britton, RN.',
+    },
+    trishaBritton: {
+      title: 'Meet Trisha Britton, RN | Unboxed Together',
+      description: 'Trisha Britton, RN is a Neuroregulation & Integrative Health Practitioner and Brainz Magazine Executive Contributor exploring nervous system regulation, burnout, recovery and whole-person wellbeing.',
     },
     book: {
       title: 'Unboxed: The Dirty Secret Hiding in Our Diet | Lee Jones',
