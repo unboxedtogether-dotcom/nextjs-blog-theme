@@ -1,13 +1,19 @@
+import Link from 'next/link';
 import Layout from '../components/Layout';
 import SEO from '../components/SEO';
+import ArticleCard from '../components/contributors/ArticleCard';
+import ContributorCard from '../components/contributors/ContributorCard';
+import { lee, trisha, trishaPhotos } from '../utils/contributors';
+import { findPublicImage } from '../utils/public-image';
 import { siteConfig } from '../utils/site-config';
 
-export default function Brainz() {
+export default function Brainz({ trishaPhoto }) {
   return (
     <Layout>
       <SEO
         title={siteConfig.seo.brainz.title}
         description={siteConfig.seo.brainz.description}
+        path="/brainz"
       />
 
       {/* Hero Section */}
@@ -17,58 +23,52 @@ export default function Brainz() {
             Brainz Magazine
           </h1>
           <p className="text-xl text-gray-100">
-            Publications and features
+            Publications and features from Lee Jones and Trisha Britton, RN
           </p>
         </div>
       </section>
 
-      {/* Executive Contributor Badge */}
-      <section className="py-12 bg-gray-50">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <div className="inline-block bg-white rounded-lg shadow-lg p-6 md:p-8">
-            <div className="inline-block bg-[var(--brand-blue)] text-white px-4 py-2 rounded-full text-sm font-semibold mb-4">
-              Executive Contributor
-            </div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">
-              {siteConfig.brainzContributor.name}
-            </h2>
-            <p className="text-[var(--brand-blue)] font-medium">
-              {siteConfig.brainzContributor.award}
-            </p>
+      {/* Executive Contributors — Lee and Trisha, equally featured */}
+      <section className="py-16 md:py-20 bg-gray-50" aria-labelledby="contributors-title">
+        <div className="site-container">
+          <div className="ut-section__heading">
+            <p className="ut-kicker">Executive Contributors</p>
+            <h2 id="contributors-title">Our people at Brainz Magazine</h2>
+            <p>Two perspectives, one shared interest in the influences that shape how we think, feel and function.</p>
+          </div>
+          <div className="contributor-grid">
+            <ContributorCard person={lee} photo={lee.photo} photoPosition="50% 40%" />
+            <ContributorCard person={trisha} photo={trishaPhoto} />
           </div>
         </div>
       </section>
 
-      {siteConfig.brainzArticles.length > 0 && (
-        <section className="py-16 md:py-24 bg-white">
-          <div className="max-w-6xl mx-auto px-4">
-            <h2 className="text-3xl font-bold text-[var(--brand-blue)] text-center mb-12">
-              Featured Articles
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {siteConfig.brainzArticles.map((article) => (
-                <article
-                  key={article.link}
-                  className="bg-gray-50 rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow"
-                >
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold text-[var(--brand-blue)] mb-3">
-                      {article.title}
-                    </h3>
-                    <p className="text-gray-600 mb-4">
-                      {article.excerpt}
-                    </p>
-                    <a
-                      href={article.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-block btn btn-primary text-sm"
-                    >
-                      Read article
-                    </a>
-                  </div>
-                </article>
-              ))}
+      {lee.articles.length > 0 && (
+        <section className="py-16 md:py-24 bg-white" aria-labelledby="lee-articles-title">
+          <div className="site-container">
+            <div className="ut-section__heading">
+              <p className="ut-kicker">Lee Jones · Executive Contributor</p>
+              <h2 id="lee-articles-title">Lee&rsquo;s Featured Articles</h2>
+            </div>
+            <div className="article-grid">
+              {lee.articles.map((article) => <ArticleCard key={article.link} article={article} />)}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {trisha.articles.length > 0 && (
+        <section className="py-16 md:py-24 bg-gray-50" aria-labelledby="trisha-articles-title">
+          <div className="site-container">
+            <div className="ut-section__heading">
+              <p className="ut-kicker">Trisha Britton, RN · Executive Contributor</p>
+              <h2 id="trisha-articles-title">Trisha&rsquo;s Writing &amp; Insights</h2>
+            </div>
+            <div className="article-grid">
+              {trisha.articles.map((article) => <ArticleCard key={article.title} article={article} />)}
+            </div>
+            <div className="profile-centre">
+              <Link href={trisha.profilePath} className="ut-btn ut-btn--secondary">Meet Trisha</Link>
             </div>
           </div>
         </section>
@@ -93,4 +93,9 @@ export default function Brainz() {
       </section>
     </Layout>
   );
+}
+
+export async function getStaticProps() {
+  const { portrait } = trishaPhotos;
+  return { props: { trishaPhoto: { ...portrait, src: findPublicImage('images/trisha', portrait.name) } } };
 }

@@ -20,6 +20,7 @@ const navLinks = [
 const moreLinks = [
   { href: '/join-us', label: 'Help shape Unboxed Together' },
   { href: '/barcode-challenge', label: '30-Day Barcode Challenge' },
+  { href: '/trisha-britton', label: 'Meet Trisha Britton, RN' },
   { href: '/brainz', label: 'Brainz Magazine' },
   { href: '/socials', label: 'Socials' },
 ];

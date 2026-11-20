@@ -213,7 +213,7 @@ export default function Home() {
 
       <section className="ut-section brainz-strip" aria-label="As featured in Brainz Magazine">
         <div className="site-container brainz-strip__inner">
-          <p><strong>{siteConfig.brainzContributor.name}</strong> writes for Brainz Magazine as an {siteConfig.brainzContributor.title}.</p>
+          <p><strong>{siteConfig.brainzContributor.name}</strong> and <Link href="/trisha-britton" className="text-link">Trisha Britton, RN</Link> write for Brainz Magazine as Executive Contributors.</p>
           <Link href="/brainz" className="text-link">Read the articles →</Link>
         </div>
       </section>
