@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { acceptInvite, handleAuthCallback } from '@netlify/identity';
 import AuthShell from '../../components/auth/AuthShell';
@@ -18,11 +19,18 @@ export default function ConfirmAuth() {
       if (result.type === 'recovery') return router.replace('/reset-password');
       if (result.type === 'invite') return setInviteToken(result.token);
       return router.replace('/members');
-    }).catch((callbackError) => setError(friendlyAuthError(callbackError)));
+    }).catch((callbackError) => {
+      // Confirmation links work once and expire. Most failures mean the link
+      // was already used or is out of date, so point people to the way back in.
+      const isConfirmation = /confirmation_token=/.test(window.location.hash);
+      setError(isConfirmation && [401, 404, 422].includes(callbackError?.status)
+        ? 'This confirmation link has expired or has already been used. If you have already confirmed, just log in. Otherwise log in with your email and password and choose "Send me a new confirmation link".'
+        : friendlyAuthError(callbackError));
+    });
   }, [router]);
 
   if (inviteToken) return <AcceptInvite token={inviteToken} />;
-  return <><SEO title="Confirming your account | Unboxed Together" description="Securely confirming your Unboxed Together account." path="/auth/confirm" /><AuthShell eyebrow="Nearly there" title="Confirming your account" intro="This usually takes only a moment."><FormMessage error={error} />{!error && <div className="auth-loading" role="status">Checking your secure link…</div>}</AuthShell></>;
+  return <><SEO title="Confirming your account | Unboxed Together" description="Securely confirming your Unboxed Together account." path="/auth/confirm" /><AuthShell eyebrow="Nearly there" title="Confirming your account" intro="This usually takes only a moment."><FormMessage error={error} />{error && <p className="field-help"><Link href="/login">Go to log in</Link> · <Link href="/signup">Create an account</Link></p>}{!error && <div className="auth-loading" role="status">Checking your secure link…</div>}</AuthShell></>;
 }
 
 function AcceptInvite({ token }) {

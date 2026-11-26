@@ -22,23 +22,30 @@ const identityEvents = {
     const metadata = event.user.userMetadata || {};
     const marketingConsent = metadata.marketing_consent === true;
 
-    const email = String(event.user.email || '').trim().toLowerCase();
-    // This event runs when the email is confirmed, so the account is verified now.
-    await db.sql`
-      INSERT INTO profiles (id, display_name, marketing_consent, marketing_consented_at, account_email, email_verified_at, identity_synced_at)
-      VALUES (
-        ${event.user.id},
-        ${metadata.full_name || ''},
-        ${marketingConsent},
-        ${marketingConsent ? new Date().toISOString() : null},
-        ${email.length >= 3 && email.length <= 254 ? email : null},
-        ${event.user.confirmedAt || new Date().toISOString()},
-        NOW()
-      )
-      ON CONFLICT (id) DO NOTHING
-    `;
-    // A profile the team area made earlier from the Identity account is now confirmed.
-    await db.sql`UPDATE profiles SET email_verified_at = COALESCE(email_verified_at, NOW()) WHERE id = ${event.user.id}`;
+    // Runs when the confirmation link is used. Nothing here may stop the
+    // confirmation from completing: a failed profile write is repaired on the
+    // member's first login instead.
+    try {
+      const email = String(event.user.email || '').trim().toLowerCase();
+      // This event runs when the email is confirmed, so the account is verified now.
+      await db.sql`
+        INSERT INTO profiles (id, display_name, marketing_consent, marketing_consented_at, account_email, email_verified_at, identity_synced_at)
+        VALUES (
+          ${event.user.id},
+          ${metadata.full_name || ''},
+          ${marketingConsent},
+          ${marketingConsent ? new Date().toISOString() : null},
+          ${email.length >= 3 && email.length <= 254 ? email : null},
+          ${event.user.confirmedAt || new Date().toISOString()},
+          NOW()
+        )
+        ON CONFLICT (id) DO NOTHING
+      `;
+      // A profile the team area made earlier from the Identity account is now confirmed.
+      await db.sql`UPDATE profiles SET email_verified_at = COALESCE(email_verified_at, NOW()) WHERE id = ${event.user.id}`;
+    } catch (error) {
+      console.error('Signup profile not saved; it is repaired on login', error.message);
+    }
 
     // Credits the member who invited them, if they came from a referral link.
     try {
