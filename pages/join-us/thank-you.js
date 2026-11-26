@@ -55,7 +55,7 @@ export default function JoinThankYou() {
             {user
               ? <Link href="/members" className="ut-btn ut-btn--primary">Go to my dashboard</Link>
               : <Link href={ref ? `/signup?ref=${encodeURIComponent(ref)}` : '/signup'} className="ut-btn ut-btn--primary">Join the free community</Link>}
-            <Link href="/" className="ut-btn ut-btn--secondary">Explore the website</Link>
+            <Link href="/home" className="ut-btn ut-btn--secondary">Explore the website</Link>
           </div>
           {!user && <p className="join-note">Membership is free and optional. We haven&apos;t created an account for you.</p>}
         </div>

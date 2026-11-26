@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { getUser, onAuthChange, refreshSession } from '@netlify/identity';
+import { rememberAccount } from '../../utils/member-cookie';
 
 const AuthContext = createContext({ user: null, loading: true, member: null, refresh: async () => {}, updateMember: () => {} });
 
@@ -36,6 +37,8 @@ export function AuthProvider({ children }) {
   }, []);
 
   const userId = user?.id;
+  // Once someone has signed in on this device, the front page sends them to login rather than sign-up.
+  useEffect(() => { if (userId) rememberAccount(); }, [userId]);
   // Ignore details left over from a previous login.
   const member = memberState && memberState.userId === userId ? memberState : null;
   // Works even if the header lookup has not finished (or failed), so a new photo always reaches the header.
