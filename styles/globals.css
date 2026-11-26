@@ -1147,6 +1147,9 @@ main > section.bg-\[var\(--brand-blue\)\]:not(:first-child) p { color: var(--col
 .form-message.is-error { border: 1px solid #e7a9a9; color: #8f2020; background: #fff3f3; }
 .form-message.is-success { border: 1px solid #a9dac8; color: #146246; background: #effbf7; }
 .auth-loading { padding: 2rem; color: var(--color-muted); text-align: center; }
+.auth-steps { margin: .5rem 0 1rem; padding-left: 1.25rem; list-style: decimal; line-height: 1.55; }
+.auth-steps li { margin-bottom: .45rem; }
+.auth-form .member-button.secondary { width: 100%; margin-top: .5rem; }
 
 .onboarding-page { min-height: 100vh; padding: 1.25rem; background: radial-gradient(circle at 10% 15%, rgba(43,75,223,.12), transparent 23rem), #f8f9ff; }
 .onboarding-header { display: flex; justify-content: space-between; align-items: center; width: min(100%, 70rem); margin: 0 auto; color: var(--color-muted); font-weight: 700; }
