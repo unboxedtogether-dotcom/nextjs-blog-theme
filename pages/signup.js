@@ -7,6 +7,7 @@ import FormMessage from '../components/auth/FormMessage';
 import SEO from '../components/SEO';
 import { useAuth } from '../components/auth/AuthProvider';
 import { friendlyAuthError } from '../utils/auth-errors';
+import { rememberAccount } from '../utils/member-cookie';
 
 export default function Signup() {
   const router = useRouter();
@@ -29,6 +30,7 @@ export default function Signup() {
         marketing_consent: form.marketing,
         ...(ref ? { referral_token: ref } : {}),
       });
+      rememberAccount();
       if (created.emailVerified) window.location.href = '/onboarding';
       else setStatus({ loading: false, error: '', success: 'Check your inbox to confirm your email. The link brings you back to finish setting up your account.' });
     } catch (error) {
@@ -39,7 +41,7 @@ export default function Signup() {
   return (
     <>
       <SEO title="Join Unboxed Together" description="Create your free Unboxed Together member account." path="/signup" />
-      <AuthShell eyebrow="Free membership" title="Start your Unboxed journey" intro="Create your free account to search additives, understand ingredients and begin tracking what changes for you." footer={<p>Already a member? <Link href="/login">Log in</Link></p>}>
+      <AuthShell badge="Free membership" title="Start your Unboxed journey" intro="Membership is completely free. Create your account to search additives, understand ingredients and begin tracking what changes for you." footer={<><p>Already a member? <Link href="/login">Log in</Link></p><p className="auth-skip"><Link href="/home">Skip for now and explore the website</Link>. You can join later.</p></>}>
         <form className="auth-form" onSubmit={submit} noValidate>
           <FormMessage error={status.error} success={status.success} />
           <label htmlFor="name">Your name</label>
@@ -57,7 +59,7 @@ export default function Signup() {
             <input type="checkbox" checked={form.marketing} onChange={(e) => setForm({ ...form, marketing: e.target.checked })} />
             <span>Send me occasional Unboxed Together updates and practical food-awareness resources. Optional.</span>
           </label>
-          <button className="member-button" type="submit" disabled={status.loading}>{status.loading ? 'Creating your account…' : 'Join free'}</button>
+          <button className="member-button" type="submit" disabled={status.loading}>{status.loading ? 'Creating your free account…' : 'Create my free account'}</button>
           <p className="privacy-short">Your account information is used to provide membership features. Onboarding answers help personalise your experience and are not labelled as medical records.</p>
         </form>
       </AuthShell>

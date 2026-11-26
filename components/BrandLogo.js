@@ -17,7 +17,7 @@ export function BrandImage({ variant = 'horizontal', className = '', alt = siteC
 // Horizontal logo (UNBOXED left, TOGETHER right) at every screen size.
 export default function BrandLogo({ className = '' }) {
   return (
-    <Link href="/" className={`brand-logo ${className}`} aria-label={`${siteConfig.siteName} home`}>
+    <Link href="/home" className={`brand-logo ${className}`} aria-label={`${siteConfig.siteName} home`}>
       <BrandImage variant="horizontal" alt="" className="brand-logo__image" priority sizes="160px" />
     </Link>
   );

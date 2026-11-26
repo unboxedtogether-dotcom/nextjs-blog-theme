@@ -11,6 +11,7 @@ import { sectionStatus } from '../../components/members/WelcomeFormCard';
 import { useMemberData } from '../../utils/use-member-data';
 import { privacyContactEmail, privacyNoticePath, questionnaireSections } from '../../utils/welcome-questionnaire.mjs';
 import BrandLoader from '../../components/BrandLoader';
+import { forgetAccount } from '../../utils/member-cookie';
 
 const seo = <SEO title="Account settings | Unboxed Together" description="Manage your Unboxed Together profile, preferences and privacy." path="/members/profile" />;
 const longDate = (value) => new Date(value).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -69,7 +70,8 @@ function SettingsContent({ initial, email }) {
     setStatus({ area: 'delete', loading: true, error: '', success: '' });
     const response = await fetch('/api/account', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ confirmation }) });
     if (!response.ok) { const data = await response.json().catch(() => ({})); return setStatus({ area: 'delete', loading: false, error: data.error || 'Account deletion could not be completed.', success: '' }); }
-    window.location.href = '/';
+    forgetAccount();
+    window.location.href = '/home';
     return undefined;
   };
 

@@ -8,7 +8,7 @@ import MemberAvatar from './members/MemberAvatar';
 import SocialLinks from './SocialLinks';
 
 const navLinks = [
-  { href: '/', label: 'Home' },
+  { href: '/home', label: 'Home' },
   { href: '/additives', label: 'Food Database' },
   { href: '/book', label: 'The Book' },
   { href: '/story', label: 'My Story' },

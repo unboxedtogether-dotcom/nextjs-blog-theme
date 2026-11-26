@@ -5,7 +5,7 @@ import { useAuth } from './auth/AuthProvider';
 import SocialLinks from './SocialLinks';
 
 const quickLinks = [
-  ['/', 'Home'],
+  ['/home', 'Home'],
   ['/additives', 'Food Database'],
   ['/book', 'The Book'],
   ['/story', 'My Story'],

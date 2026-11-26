@@ -50,7 +50,7 @@ export default function JoinPreferences() {
         {state.error && <p className="onboarding-error" role="alert">{state.error}</p>}
         {state.notice && <p className="form-message is-success" role="status">{state.notice}</p>}
         {state.data?.erased && (
-          <section className="profile-panel"><h2>Your answers have been deleted</h2><p>We have deleted your questionnaire answers, contact details and preferences. We keep only a scrambled copy of your email address so it is not contacted again.</p><Link className="member-button" href="/">Go to the homepage</Link></section>
+          <section className="profile-panel"><h2>Your answers have been deleted</h2><p>We have deleted your questionnaire answers, contact details and preferences. We keep only a scrambled copy of your email address so it is not contacted again.</p><Link className="member-button" href="/home">Go to the homepage</Link></section>
         )}
         {permissions && (
           <section className="profile-panel join-prefs">

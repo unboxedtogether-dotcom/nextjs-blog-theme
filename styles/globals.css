@@ -2665,3 +2665,10 @@ section[id], [id="footer"] { scroll-margin-top: 6rem; }
   .interest-card, .article-card { transition: none; }
   .interest-card:hover { transform: none; }
 }
+
+/* Free membership emphasis on the sign-up page */
+.auth-free-badge { display: inline-block; margin: 0; padding: .55rem 1.1rem; border-radius: 999px; color: var(--brand-blue-dark, #0a14d5); background: #ffe45c; font-weight: 800; font-size: 1rem; letter-spacing: .08em; text-transform: uppercase; box-shadow: 0 .5rem 1.5rem rgba(0,0,0,.18); }
+.auth-brand-panel p.auth-free-badge { color: var(--brand-blue-dark, #0a14d5); }
+.auth-footer .auth-skip { margin-top: .9rem; color: var(--color-muted); font-size: .9rem; }
+.auth-footer .auth-skip a { color: var(--color-muted); text-decoration: underline; text-underline-offset: 2px; }
+.auth-footer .auth-skip a:hover, .auth-footer .auth-skip a:focus-visible { color: var(--color-royal); }
